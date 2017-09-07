@@ -5,13 +5,15 @@ from isotope_calcite import isotope_calcite
 #followed by execution of the ISOLTUION code for in-cave processes (isotope_calcite module)
 
 def karst_process(tt,mm,evpt,prp,prpxp,tempp,d18o,d18oxp,dpdf,epdf,soilstorxp,soil18oxp,
-epxstorxp,epx18oxp,kststor1xp,kststor118oxp,kststor2xp,kststor218oxp,data_rest,calculate_drip,cave_temp):
-    #following parameters are mainly unpacked from 'data_rest' which is from the config file
-    #store size parameters
-    soilsize=data_rest[5][0]
-    episize=data_rest[5][3]
-    ks1size=data_rest[5][4]  
-    ks2size=data_rest[5][5]
+epxstorxp,epx18oxp,kststor1xp,kststor118oxp,kststor2xp,kststor218oxp,config,calculate_drip,cave_temp):
+
+
+    mf = config['monthly_forcing']
+    #store size parameters  - soilstore, epikarst, ks1, ks2
+    soilsize=config['soilstore']
+    episize=config['epikarst']
+    ks1size=config['ks1']
+    ks2size=config['ks2']
     
     #making sure the init sizes don't exceed store capacity
     if soilstorxp>soilsize:
@@ -24,8 +26,8 @@ epxstorxp,epx18oxp,kststor1xp,kststor118oxp,kststor2xp,kststor218oxp,data_rest,c
         kststor2xp=ks2size-1
     
     #overflow parameters
-    epicap=data_rest[5][1]
-    ovcap=data_rest[5][2]
+    epicap=config['epicap']
+    ovcap=config['ovicap']
     #ensuring the overflow parameters are less than the store
     if epicap>=episize:
         epicap=episize-1
@@ -33,12 +35,12 @@ epxstorxp,epx18oxp,kststor1xp,kststor118oxp,kststor2xp,kststor218oxp,data_rest,c
         ovcap=ks2size-1
         
     #average cave parameters for various months
-    drip_interval = data_rest[4][mm-1]
-    drip_pco2=data_rest[7][mm-1]/1000000.0
-    cave_pco2 = data_rest[8][mm-1]/1000000.0
-    h = data_rest[9][mm-1]
-    v = data_rest[10][mm-1]
-    phi = data_rest[11][0]
+    drip_interval = mf['drip_interval'][mm-1]
+    drip_pco2=mf['drip_pco2'][mm-1]/1000000.0
+    cave_pco2 = mf['cave_pco2'][mm-1]/1000000.0
+    h = mf['rel_humidity'][mm-1]
+    v = mf['ventilation'][mm-1]
+    phi = config['mixing_parameter_phi']
     
     #making sure cave values don't become negative
     if v<0:
@@ -61,29 +63,29 @@ epxstorxp,epx18oxp,kststor1xp,kststor118oxp,kststor2xp,kststor218oxp,data_rest,c
         phi=1
     
     #weibull parameters
-    w=data_rest[6][0] 
-    z=data_rest[6][1]
+    w=config['k_weibull'] #data_rest[6][0] 
+    z=config['lambda_weibull'] #data_rest[6][1]
     x=np.linspace(0,2,12)    
     v_1=s.exponweib(w,z)
     y1=v_1.cdf(x)
     y=np.append([0],y1[1:]-y1[0:11])
     
     #parameterisable coefficients
-    k_f1=data_rest[0][0]        #f1 from soilstore to epikarst
-    k_f3=data_rest[0][1]        #f3 from epikarst to KS1
-    k_f8=data_rest[0][6]
-    k_f5=data_rest[0][2]        #f5 from KS1 to stal5
-    k_f6=data_rest[0][3]        #f6 from KS2 to stal1
-    k_f7=data_rest[0][4]        #f7 overflow from KS2 to KS1
-    k_diffuse=data_rest[0][5]   #diffuse flow from Epikarst to KS1
-    k_e_evap=data_rest[2][0]    #epikarst evap (funct of ET for timestep) Used for both sources???
-    k_evapf=data_rest[2][1]     #soil evap d18o fractionation from somepaper????
-    k_e_evapf=data_rest[2][2]   #epikarst evap d18o fractionation ??? can use same value?  
-    i=data_rest[1][0]           #epikarst in bypass flow mixture to stal1, (<1 & i+j+k=1)
-    j=data_rest[1][1]           #rain in bypass flow mixture to stal1, (<1 & i+j+k=1)
-    k=data_rest[1][2]           #rain from last step in bypass flow mixture to stal1, (<1 & i+j+k=1)
-    m=data_rest[1][3]           #epikarst in bypass flow mixture to stal2, (<1 & m+n=1)
-    n=data_rest[1][4]           #rain in bypass flow mixture to stal2, (<1 & m+n=1)
+    k_f1=config['f1'] #data_rest[0][0]        #f1 from soilstore to epikarst
+    k_f3=config['f3'] #data_rest[0][1]        #f3 from epikarst to KS1
+    k_f8=config['f8'] #data_rest[0][6]
+    k_f5=config['f5'] #data_rest[0][2]        #f5 from KS1 to stal5
+    k_f6=config['f6'] #data_rest[0][3]        #f6 from KS2 to stal1
+    k_f7=config['f7'] #data_rest[0][4]        #f7 overflow from KS2 to KS1
+    k_diffuse=config['k_diffuse'] #data_rest[0][5]   #diffuse flow from Epikarst to KS1
+    k_e_evap=config['k_eevap'] #data_rest[2][0]    #epikarst evap (funct of ET for timestep) Used for both sources???
+    k_evapf=config['k_d18o_soil'] #kdata_rest[2][1]     #soil evap d18o fractionation from somepaper????
+    k_e_evapf=config['k_d18o_epi'] #data_rest[2][2]   #epikarst evap d18o fractionation ??? can use same value?  
+    i=config['i'] #data_rest[1][0]           #epikarst in bypass flow mixture to stal1, (<1 & i+j+k=1)
+    j=config['j'] #data_rest[1][1]           #rain in bypass flow mixture to stal1, (<1 & i+j+k=1)
+    k=config['k'] #data_rest[1][2]           #rain from last step in bypass flow mixture to stal1, (<1 & i+j+k=1)
+    m=config['m'] #data_rest[1][3]           #epikarst in bypass flow mixture to stal2, (<1 & m+n=1)
+    n=config['n'] #data_rest[1][4]           #rain in bypass flow mixture to stal2, (<1 & m+n=1)
     
     #********************************************************************************************
     #starting going through the karst processes in a procedural manner (up-down)
@@ -101,7 +103,7 @@ epxstorxp,epx18oxp,kststor1xp,kststor118oxp,kststor2xp,kststor218oxp,data_rest,c
     if soilstor>soilsize:
         soilstor=soilsize
     
-    #prevents any flux when surface is near-frozen. in this case, 0.0 degree c     
+    #prevents any flux when surface is near-frozen. in this case, 0.0 degree c 
     if tempp[0]>0.0:
         f1=soilstor*k_f1
     else:
