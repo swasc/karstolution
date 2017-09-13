@@ -15,12 +15,64 @@ Scipy
 (optional) pandas  
 
 # Installation
-The current easiest way is to just to download and use the files in the Karstolution folder, executing the model from the __init__ file.  
-The configuration and input csv files are described below  
+
+TODO
 
 # Configuration File
-A csv file containing all the model parameters is currently the way the GUI works (example is provided). To allow mixed-use of Karstolution between the python script and GUI, the same configuration file is used. This has to be modified manually using a text editor.  
-The following is the format of the configuration csv file (see above conceptual figure):  
+
+The configuration is passed to the main model routine as a `dict`, i.e. a Python dictionary.
+A convenient way of soring the configuration is as a [yaml](http://yaml.org/) formatted file.
+See `example/example.py` for full details.
+
+```yaml
+f1 : 0.2
+f3 : 0.008
+f5 : 0.005
+f6 : 0.002
+f7 : 1.0
+k_diffuse : 0.008
+f8 : 0.001
+i : 0.5
+j : 0.25
+k : 0.25
+m : 0.75
+n : 0.25
+k_eevap : 0.0
+k_d18o_soil : 0.03
+k_d18o_epi : 0.0
+soilstore : 200.0
+epicap : 400.0
+ovicap : 100.0
+epikarst : 400.0
+ks1 : 400.0
+ks2 : 200.0
+lambda_weibull : 1.5
+k_weibull : 1.0
+mixing_parameter_phi : 1.0
+# these parameters are forced by a climatological monthly mean
+# (so there needs to be a list of 12 values, January-December)
+monthly_forcing : 
+  drip_pco2 : [4000.0,4000.0,4000.0,4000.0,4000.0,4000.0,4000.0,4000.0,4000.0,4000.0,4000.0,4000.0]
+  cave_pco2 : [1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,1000.0]
+  rel_humidity : [0.95,0.95,0.95,0.95,0.95,0.95,0.95,0.95,0.95,0.95,0.95,0.95]
+  ventilation : [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]
+  cave_temp : [10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0]
+  drip_interval : [100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0]
+initial_conditions :
+  # initial level in each store
+  soil : 50.0
+  epikarst : 100.0
+  ks1 : 230.0
+  ks2 : 50.0
+  diffuse : 30.0
+  # initial oxygen-18 composition in each store (d18O, permille VSMOW)
+  d18o_soil : -5.0
+  d18o_epikarst : -4.0
+  d18o_ks1 : -5.0
+  d18o_ks2 : -4.0
+  d18o_prevrain : -5.0
+  d18o_diffuse : -4.0
+```  
 F1,F3,F5,F6,F7,k_diffuse,f8  
 i,j,k,m,n  
 k_eevap, k_d18o_soil, k_d18o_epi  
