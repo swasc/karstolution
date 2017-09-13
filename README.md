@@ -13,6 +13,7 @@ Numpy
 Scipy  
 (optional) matplotlib  
 (optional) pandas  
+(optional) pyaml
 
 # Installation
 
@@ -73,20 +74,7 @@ initial_conditions :
   d18o_prevrain : -5.0
   d18o_diffuse : -4.0
 ```  
-F1,F3,F5,F6,F7,k_diffuse,f8  
-i,j,k,m,n  
-k_eevap, k_d18o_soil, k_d18o_epi  
-Cave temps (monthly: Jan-Dec)  
-Drip intervals (monthly: Jan-Dec)  
-Soilstore, epicap, ovicap, epikarst, KS1, KS2 (store sizes)  
-Lambda, k (weibull)  
-Drip pCO2 (monthly: Jan-Dec)  
-Cave pCO2 (monthly: Jan-Dec)  
-Rel Humidity (monthly: Jan-Dec)  
-Ventilation (monthly: Jan-Dec)  
-Mixing parameter (phi)  
-Store initial values (mm): soil, epikarst, ks1, ks2, diffuse  
-δ18O intial values (per mille):  soil, epikarst, ks1, ks2, prev rain, diffuse  
+
 
 # Input file
 The input file is a csv of climatic inputs, a similar format to that of KarstFor (example is provided).  
