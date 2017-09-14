@@ -21,7 +21,8 @@ def weibull_parameters_y(w,z, __cache=[None,None]):
     return y
 
 def karst_process(tt,mm,evpt,prp,prpxp,tempp,d18o,d18oxp,dpdf,epdf,soilstorxp,soil18oxp,
-epxstorxp,epx18oxp,kststor1xp,kststor118oxp,kststor2xp,kststor218oxp,config,calculate_drip,cave_temp):
+epxstorxp,epx18oxp,kststor1xp,kststor118oxp,kststor2xp,kststor218oxp,config,calculate_drip,cave_temp,
+calculate_isotope_calcite=True):
     """
     this function contains all the karst hydrological processes (based on the KarstFor code)
     followed by execution of the ISOLTUION code for in-cave processes (isotope_calcite module)
@@ -104,6 +105,11 @@ epxstorxp,epx18oxp,kststor1xp,kststor118oxp,kststor2xp,kststor218oxp,config,calc
     k=config['k'] #data_rest[1][2]           #rain from last step in bypass flow mixture to stal1, (<1 & i+j+k=1)
     m=config['m'] #data_rest[1][3]           #epikarst in bypass flow mixture to stal2, (<1 & m+n=1)
     n=config['n'] #data_rest[1][4]           #rain in bypass flow mixture to stal2, (<1 & m+n=1)
+
+    # these are placeholders if we're not running the ISOLTUION part of the model
+    if not calculate_isotope_calcite:
+        stal1d18o,stal2d18o,stal3d18o,stal4d18o,stal5d18o = (np.NaN, np.NaN,
+                                                        np.NaN, np.NaN, np.NaN)
 
     #********************************************************************************************
     #starting going through the karst processes in a procedural manner (up-down)
@@ -253,9 +259,10 @@ epxstorxp,epx18oxp,kststor1xp,kststor118oxp,kststor2xp,kststor218oxp,config,calc
             drip_interval_ks2=int(drip_interval*ks2size/kststor2)
         else:
             drip_interval_ks2=int(drip_interval)
-        #running the ISOLUTION part of the model
-        stal1d18o=isotope_calcite(drip_interval_ks2, cave_temp, drip_pco2, cave_pco2, h, v, phi,
-        kststor218o,tt)
+        if calculate_isotope_calcite:
+            #running the ISOLUTION part of the model
+            stal1d18o=isotope_calcite(drip_interval_ks2, cave_temp, drip_pco2, cave_pco2, h, v, phi,
+            kststor218o,tt)
 
 
     #same drip interal calculation for epikarst store (stalagmite 4)
@@ -267,8 +274,9 @@ epxstorxp,epx18oxp,kststor1xp,kststor118oxp,kststor2xp,kststor218oxp,config,calc
             drip_interval_epi=int(drip_interval*episize/epxstor)
         else:
             drip_interval_epi=int(drip_interval)
-        stal4d18o=isotope_calcite(drip_interval_epi, cave_temp, drip_pco2, cave_pco2, h, v, phi,
-        epx18o,tt)
+        if calculate_isotope_calcite:
+            stal4d18o=isotope_calcite(drip_interval_epi, cave_temp, drip_pco2, cave_pco2, h, v, phi,
+            epx18o,tt)
 
     #drip interval calculations for Karst Store 1, which includes the bypass stalagmites 2 and 3.
     #Drip interval for these are
@@ -290,12 +298,13 @@ epxstorxp,epx18oxp,kststor1xp,kststor118oxp,kststor2xp,kststor218oxp,config,calc
             drip_interval_ks1=int(drip_interval)
             drip_interval_stal3=int(drip_interval)
             drip_interval_stal2=int(drip_interval)
-        stal5d18o=isotope_calcite(drip_interval_ks1, cave_temp, drip_pco2, cave_pco2, h, v,
-        phi,kststor118o,tt)
-        stal3d18o=isotope_calcite(drip_interval_stal3, cave_temp, drip_pco2, cave_pco2, h, v,
-        phi,drip218o,tt)
-        stal2d18o=isotope_calcite(drip_interval_stal2, cave_temp, drip_pco2, cave_pco2, h, v,
-        phi,drip118o,tt)
+        if calculate_isotope_calcite:
+            stal5d18o=isotope_calcite(drip_interval_ks1, cave_temp, drip_pco2, cave_pco2, h, v,
+            phi,kststor118o,tt)
+            stal3d18o=isotope_calcite(drip_interval_stal3, cave_temp, drip_pco2, cave_pco2, h, v,
+            phi,drip218o,tt)
+            stal2d18o=isotope_calcite(drip_interval_stal2, cave_temp, drip_pco2, cave_pco2, h, v,
+            phi,drip118o,tt)
 
     #returning the values to karstolution1.1 module to  be written to output
     return [tt,mm,f1,f3,f4,f5,f6,f7,soilstor,epxstor,kststor1,kststor2,soil18o,epx18o,kststor118o,

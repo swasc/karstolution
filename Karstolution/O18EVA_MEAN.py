@@ -51,9 +51,7 @@ def O18EVA_MEAN(tmax, TC, pCO2, pCO2cave, h, v, R18_hco_ini, R18_h2o_ini, R18v, 
 
     if tmax > np.floor(h2o_ini/eva):
         tmax = int(np.floor(h2o_ini/eva))
-        # TODO: is this an error? Should we raise an exception?
-        # the print function seems to mess with numba.jit
-        #print('DRIPINTERVALL IS TOO LONG, THE WATERLAYER EVAPORATES COMPLETLY FOR THE GIVEN d, run # ',tt)
+        raise RuntimeError('DRIPINTERVALL IS TOO LONG, THE WATERLAYER EVAPORATES COMPLETLY FOR THE GIVEN d (tt={})'.format(tt))
 
     dt = 1
     t=range(1,tmax+1)
