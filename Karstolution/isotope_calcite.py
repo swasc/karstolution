@@ -98,6 +98,11 @@ def isotope_calcite(d, TC, pCO2, pCO2cave, h, V, phi, d18Oini, tt):
 
         r18mix = round(r_hco18_mix*10**13)
         r18res = round(r18_hco_res*10**13)
+        
+        # bail out of loop if we get invalid values (O18EVA can return NaN
+        # if droplets evaporate completely)
+        if np.isnan(r18mix) or np.isnan(r18res):
+            break
 
 
     r_hco18, r_h2o18, hco, h2o, delta_1  = O18EVA_MEAN.O18EVA_MEAN(d,

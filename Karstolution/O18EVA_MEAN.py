@@ -51,7 +51,8 @@ def O18EVA_MEAN(tmax, TC, pCO2, pCO2cave, h, v, R18_hco_ini, R18_h2o_ini, R18v, 
 
     if tmax > np.floor(h2o_ini/eva):
         tmax = int(np.floor(h2o_ini/eva))
-        raise RuntimeError('DRIPINTERVALL IS TOO LONG, THE WATERLAYER EVAPORATES COMPLETLY FOR THE GIVEN d (tt={})'.format(tt))
+        #raise RuntimeError('DRIPINTERVALL IS TOO LONG, THE WATERLAYER EVAPORATES COMPLETLY FOR THE GIVEN d (tt={})'.format(tt))
+        return (np.NaN, np.NaN, np.NaN, np.NaN, np.NaN, np.NaN)
 
     dt = 1
     t=range(1,tmax+1)
