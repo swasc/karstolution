@@ -11,6 +11,9 @@ def karstolution(config,df_input,calculate_drip=True, calculate_isotope_calcite=
     c = config
     ic = c['initial_conditions']
     mf = c['monthly_forcing']
+    # number of months of history in weibull distribution, default of 12
+    weibull_delay_months = config.get('weibull_delay_months', 12)
+    weibull_delay_months = int(weibull_delay_months)
 
     # headers for the output
     output_columns = ['tt','mm','f1','f3','f4','f5','f6','f7','soilstor','epxstor',
@@ -32,8 +35,8 @@ def karstolution(config,df_input,calculate_drip=True, calculate_isotope_calcite=
     d18oxp=ic['d18o_prevrain']
     prpxp=0                     #initial value for rain from 'previous' step
     #weibull distribution (diffuse flow) currently set to 12 months, can be increased
-    dpdf=[ic['diffuse']]*12       #inital water quantity in the weibull distribution (diffuse flow)
-    epdf=[ic['d18o_diffuse']]*12       #inital d18O in the weibull distribution (diffuse flow)
+    dpdf=[ic['diffuse']]*weibull_delay_months       #inital water quantity in the weibull distribution (diffuse flow)
+    epdf=[ic['d18o_diffuse']]*weibull_delay_months       #inital d18O in the weibull distribution (diffuse flow)
 
 
     #the rest of the data which we are not unpacking (but will do so later)
@@ -84,6 +87,14 @@ def karstolution(config,df_input,calculate_drip=True, calculate_isotope_calcite=
 
         output_rows.append(out)
 
+        # Note: this is what out contains:
+        # 0  tt,mm,f1,f3,f4,
+        # 5  f5,f6,f7,soilstor,epxstor,
+        # 10 kststor1,kststor2,soil18o,epx18o,kststor118o,
+        # 15 kststor218o,dpdf[0],stal1d18o,stal2d18o,stal3d18o,
+        # 20 stal4d18o,stal5d18o,drip_interval_ks2, drip_interval_epi,drip_interval_stal3,
+        # 25 drip_interval_stal2,drip_interval_ks1,cave_temp
+
 
         #update model terms for next iteration
         epx18oxp=out[13]
@@ -94,10 +105,10 @@ def karstolution(config,df_input,calculate_drip=True, calculate_isotope_calcite=
         kststor2xp=out[11]
         kststor118oxp=out[14]
         kststor218oxp=out[15]
-        epdf[1:11]=epdf[0:10]
+        epdf[1:]=epdf[:-1]
         epdf[0]=out[13]
-        dpdf[1:11]=dpdf[0:10]
-        dpdf[0]=out[16]
+        dpdf[1:]=dpdf[:-1]
+        dpdf[0]=out[9]
         d18oxp=d18o
         prpxp=prp
         tempp[1:36]=tempp[0:35]

@@ -2,20 +2,20 @@ from scipy import stats
 import numpy as np
 from isotope_calcite import isotope_calcite
 
-def weibull_parameters_y(w,z, __cache=[None,None]):
+def weibull_parameters_y(w,z, weibull_delay_months, __cache=[None,None]):
     """
     Calculate y, derived from the Weibull distribution
 
     This is slow - so we remember the result for next time, as this
     tends to get called lots of times with the same values for w and z
     """
-    if __cache[0] == (w,z):
+    if __cache[0] == (w,z,weibull_delay_months):
         return __cache[1]
     else:
-        x=np.linspace(0,2,12)
+        x=np.linspace(0,2,weibull_delay_months)
         v_1=stats.exponweib(w,z)
         y1=v_1.cdf(x)
-        y=np.append([0],y1[1:]-y1[0:11])
+        y=np.append([0],y1[1:]-y1[0:weibull_delay_months-1])
         __cache[0] = (w,z)
         __cache[1] = y
     return y
@@ -27,7 +27,9 @@ calculate_isotope_calcite=True):
     this function contains all the karst hydrological processes (based on the KarstFor code)
     followed by execution of the ISOLTUION code for in-cave processes (isotope_calcite module)
     """
-
+    # number of months of history in weibull distribution, default of 12
+    weibull_delay_months = config.get('weibull_delay_months', 12)
+    weibull_delay_months = int(weibull_delay_months)
     mf = config['monthly_forcing']
     #store size parameters  - soilstore, epikarst, ks1, ks2
     soilsize=config['soilstore']
@@ -86,7 +88,7 @@ calculate_isotope_calcite=True):
     #weibull parameters
     w=config['lambda_weibull'] #data_rest[6][0]
     z=config['k_weibull'] #data_rest[6][1]
-    y = weibull_parameters_y(w,z)
+    y = weibull_parameters_y(w,z,weibull_delay_months)
 
 
     #parameterisable coefficients
@@ -265,7 +267,7 @@ calculate_isotope_calcite=True):
             kststor218o,tt)
 
 
-    #same drip interal calculation for epikarst store (stalagmite 4)
+    #same drip interval calculation for epikarst store (stalagmite 4)
     if epxstor<0.01:
         stal4d18o=-99.9
         drip_interval_epi=9001
