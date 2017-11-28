@@ -13,12 +13,90 @@ def weibull_parameters_y(w,z, weibull_delay_months, __cache=[None,None]):
         return __cache[1]
     else:
         x=np.linspace(0,2,weibull_delay_months)
-        v_1=stats.exponweib(w,z)
-        y1=v_1.cdf(x)
-        y=np.append([0],y1[1:]-y1[0:weibull_delay_months-1])
+        #  weibull_k is shape, weibull_lambda (c, in scipy) is scale, location is set to zero
+        loc = 0
+        weibull_lambda = w
+        weibull_k = z
+        y = stats.weibull_min(loc=0.0, c=weibull_k, scale=weibull_lambda).pdf(x)
+        y[0] = 0.0
+        # guard against bad inputs
+        y[np.logical_not(np.isfinite(y))] = 0.001
+        y = y/y.sum()
+        #v_1=stats.exponweib(w,z)
+        #y1=v_1.cdf(x)
+        #y=np.append([0],y1[1:]-y1[0:weibull_delay_months-1])
         __cache[0] = (w,z)
         __cache[1] = y
     return y
+
+
+#
+# ... I'm thinking of factoring some of karst_process out into subroutines...
+#
+
+def mix_tracer(volumes, tracer_concs):
+    """
+    Calculate final tracer concentration from iterables
+    
+    Inputs
+    ------
+        - `volumes` : iterable
+            volume of mixing sources
+        - `tracer_concs` : iterable
+            tracer concentration in each volume
+    Returns
+    -------
+        Tracer concentration in mixed volume (i.e. weighted sum of input
+        tracer concentrations)
+    """
+    volumes = np.array(volumes)
+    tracer_concs = np.array(tracer_concs)
+    mean_tracer_conc = (volumes*tracer_concs).sum() / volumes.sum()
+    return mean_tracer_conc
+
+def solve_store(store_volume, store_d18o, inflow_fluxes, 
+                inflow_d18O, outflow_fluxes):
+    # remove outflow - do this first so that mixing doesn't happen instantly
+    store_volume = max(0, store_volume - np.sum(outflow_fluxes))
+    # calculate d18o after mixing
+    d18o_final = mix_tracers(inflow_fluxes)
+    # TODO....
+
+def calc_flux(k, store_level):
+    """
+    Calculate flux out of a store
+
+    If $S_c$ is the store capacity, $s$ is the store level, and $k$ is the 
+    proportionality constant, then the output flux is
+
+    $$ Q = k S_c (s/S_c) $$
+
+    which means,
+
+    $$ Q = k s $$
+    
+
+    Inputs
+    ------
+
+        - *k* real in range [0,1]
+        Proportionality constant.  If k=1 then the store will drain completely
+        in one timestep.
+
+        - *store_level* real
+        The present level in the store (units of length)
+
+    Returns
+    -------
+        - *flux* real
+        Flow out of the store, in units of length (volume per unit area)
+
+    """
+    Q = k*store_level
+    Q = min(Q, store_level)
+    return Q
+
+
 
 def karst_process(tt,mm,evpt,prp,prpxp,tempp,d18o,d18oxp,dpdf,epdf,soilstorxp,soil18oxp,
 epxstorxp,epx18oxp,kststor1xp,kststor118oxp,kststor2xp,kststor218oxp,config,calculate_drip,cave_temp,
@@ -31,6 +109,10 @@ calculate_isotope_calcite=True):
     weibull_delay_months = config.get('weibull_delay_months', 12)
     weibull_delay_months = int(weibull_delay_months)
     mf = config['monthly_forcing']
+
+    # use new tracer mixing code
+    tracer_mixing_flag = config.get('use_new_tracer_mixing_code', True)
+
     #store size parameters  - soilstore, epikarst, ks1, ks2
     soilsize=config['soilstore']
     episize=config['epikarst']
@@ -92,12 +174,14 @@ calculate_isotope_calcite=True):
 
 
     #parameterisable coefficients
-    k_f1=config['f1'] #data_rest[0][0]        #f1 from soilstore to epikarst
-    k_f3=config['f3'] #data_rest[0][1]        #f3 from epikarst to KS1
-    k_f8=config['f8'] #data_rest[0][6]
-    k_f5=config['f5'] #data_rest[0][2]        #f5 from KS1 to stal5
-    k_f6=config['f6'] #data_rest[0][3]        #f6 from KS2 to stal1
-    k_f7=config['f7'] #data_rest[0][4]        #f7 overflow from KS2 to KS1
+    k_f1=config['f1'] #data_rest[0][0]        # f1 from soilstore to epikarst
+    k_f3=config['f3'] #data_rest[0][1]        # f3 from epikarst to KS1
+    k_f4=config['f4']                         # f5: from eipkarst to KS2
+    k_f5=config['f5'] #data_rest[0][2]        # f5 from KS1 to stal5
+    k_f6=config['f6'] #data_rest[0][3]        # f6 from KS2 to stal1
+    k_f7=config['f7'] #data_rest[0][4]        # f7 overflow from KS2 to KS1
+    k_f8=config['f8'] #data_rest[0][6]        # f8: from soil store to KS2
+
     k_diffuse=config['k_diffuse'] #data_rest[0][5]   #diffuse flow from Epikarst to KS1
     k_e_evap=config['k_eevap'] #data_rest[2][0]    #epikarst evap (funct of ET for timestep) Used for both sources???
     k_evapf=config['k_d18o_soil'] #kdata_rest[2][1]     #soil evap d18o fractionation from somepaper????
@@ -131,21 +215,25 @@ calculate_isotope_calcite=True):
 
     #prevents any flux when surface is near-frozen. in this case, 0.0 degree c
     if tempp[0]>0.0:
-        f1=soilstor*k_f1
+        f1 = calc_flux(k_f1, soilstor)
     else:
         f1=0
     #updating the final soil store level (removing the F1 value)
     soilstor=soilstor-f1
 
+    # f8 is a parallel flow path to f1, proportional but no affecting
+    # the level of the soil store
+    f8 = k_f8 * f1
+
     #increases epikarst store volume
     epxstor=epxstorxp+f1
     #draining from bottom first as gravity fed
-    f3 = epxstor*k_f3
+    f3 = calc_flux(k_f3, epxstor)
     #diffuse flow leaving epikarst and going to KS1
     #assuming diffuse flow follows a weibull distrubtion
-    dpdf[0]=(epxstor-f3)*k_diffuse
-    if epxstor-f3-dpdf[0]> epicap:
-        f4=(epxstor-f3-dpdf[0]-epicap)
+    dpdf[0] = calc_flux(k_diffuse, epxstor-f3)
+    if epxstor > epicap:
+        f4 = calc_flux(k_f4, epxstor-epicap)
     else:
         f4=0
 
@@ -172,12 +260,12 @@ calculate_isotope_calcite=True):
         epxstor=episize
 
     #fluxes into and out of KS2
-    kststor2=kststor2xp+f4
+    kststor2=kststor2xp+f4+f8
     if kststor2 > ovcap:
-        f7=(kststor2-ovcap)*k_f7
+        f7 = calc_flux(k_f7, kststor2-ovcap)
     else:
         f7=0
-    f6=(kststor2-f7)*k_f6
+    f6 = calc_flux(k_f6, kststor2-f7)
     kststor2=kststor2-f6-f7
 
     #ensuring the kststor2 does not exceed user-defined capacity
@@ -186,14 +274,14 @@ calculate_isotope_calcite=True):
 
     #f8 bypass flow from surface rain to KS1
     # TODO: fix this magic number (rainfall threshold of 7)
-    if prp>7:
-        f8=prp*k_f8
-    else:
-        f8=0
+    #if prp>7:
+    #    f8=prp*k_f8
+    #else:
+    #    f8=0
 
     #fluxes into and out of KS1
-    kststor1=kststor1xp+f3+sum(y*dpdf)+f7+f8
-    f5=kststor1*k_f5
+    kststor1=kststor1xp+f3+sum(y*dpdf)+f7
+    f5 = calc_flux(k_f5, kststor1)
     kststor1=kststor1-f5
 
     #ensuring the kststor1 does not exceed user-defined capacity
@@ -215,35 +303,53 @@ calculate_isotope_calcite=True):
     if soil18o>0.0001:
         soil18o=soil18oxp
 
-    #mixing and fractionation of epikarst store d18o
-    a=f1
-    b=a+epxstorxp
-    #quick fix for divide-by-zero error when b is too small
-    if b<=0.001:
-        b=0.001
-    c=(epxstorxp/b)*(epx18oxp+e_evpt*k_e_evapf)
-    d=(a/b)*soil18o
-    epx18o=c+d
-    epdf[0]=epx18o
+    if tracer_mixing_flag:
+        # mixing and fractionation of epikarst store d18o
+        # mixing between inflow f1 (soil 18o) and present volume (affected by epicast evaporation)
+        volumes = np.r_[f1, epxstorxp]
+        isotopes = np.r_[soil18o, epx18oxp+e_evpt*k_e_evapf]
+        epx18o = mix_tracer(volumes, isotopes)
+        epdf[0]=epx18o
+    else:
+        #mixing and fractionation of epikarst store d18o
+        a=f1
+        b=a+epxstorxp
+        #quick fix for divide-by-zero error when b is too small
+        if b<=0.001:
+            b=0.001
+        c=(epxstorxp/b)*(epx18oxp+e_evpt*k_e_evapf)
+        d=(a/b)*soil18o
+        epx18o=c+d
+        epdf[0]=epx18o
 
     #mixing of kststor2 d18o
-    if f4<0.01:
-        kststor218o=kststor218oxp
+    if tracer_mixing_flag:
+        volumes = np.r_[f4, kststor2xp]
+        isotopes = np.r_[epx18o, kststor218oxp]
+        kststor218o = mix_tracer(volumes, isotopes)
     else:
-        b2=f4+kststor2xp
-        c2=(kststor2xp/b2)*kststor218oxp
-        d2=(f4/b2)*epx18o
-        kststor218o=c2+d2
+        if f4<0.01:
+            kststor218o=kststor218oxp  # AG: surely this is not right?? TODO: check
+        else:
+            b2=f4+kststor2xp
+            c2=(kststor2xp/b2)*kststor218oxp
+            d2=(f4/b2)*epx18o
+            kststor218o=c2+d2
 
     #mixing of KS1 d18o
-    b1=f3+kststor1xp+sum(y*dpdf)+f7+f8
-    c1=(kststor1xp/b1)*kststor118oxp
-    d1=(f3/b1)*epx18o
-    e1=(sum(y*dpdf*epdf)/b1)
-    g1=(f7/b1)*kststor218o
-    h1=f8/b1*d18o
-    kststor118o=c1+d1+e1+g1+h1
-
+    if tracer_mixing_flag:
+        volumes = np.r_[f3, kststor1xp, y*dpdf, f7]
+        isotopes = np.r_[epx18o, kststor118oxp, epdf, kststor218o]
+        kststor118o = mix_tracer(volumes=volumes, tracer_concs=isotopes)
+    else:
+        b1=f3+kststor1xp+sum(y*dpdf)+f7
+        c1=(kststor1xp/b1)*kststor118oxp
+        d1=(f3/b1)*epx18o
+        e1=(sum(y*dpdf*epdf)/b1)
+        g1=(f7/b1)*kststor218o
+        h1=f8/b1*d18o
+        kststor118o=c1+d1+e1+g1+h1
+    
     #bypass flow (from epikarst and direct from rain)
     p=d18o
     r=d18oxp
