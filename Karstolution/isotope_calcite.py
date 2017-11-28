@@ -1,4 +1,4 @@
-import constants, evaporation, cmodel_frac, O18EVA_MEAN, O18EVA
+from . import constants, evaporation, cmodel_frac, O18EVA_MEAN, O18EVA
 import numpy as np
 #main module for the ISOLUTION part of the Karstolution model, which deals with in-cave
 #isotope fractionation. This is a translation of the matlab code from Deininger et al. (2012)

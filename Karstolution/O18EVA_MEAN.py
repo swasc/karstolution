@@ -1,4 +1,5 @@
-import math, evaporation, cmodel_frac, constants
+import math
+from . import evaporation, cmodel_frac, constants
 import numpy as np
 from numba import jit
 

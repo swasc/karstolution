@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-import karst_process
+from . import karst_process
 
 #this function unpacks and initialses some of the model parameters, reads the input file
 #iterates each step (according to each entry of the input file)

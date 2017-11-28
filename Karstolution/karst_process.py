@@ -1,6 +1,6 @@
 from scipy import stats
 import numpy as np
-from isotope_calcite import isotope_calcite
+from .isotope_calcite import isotope_calcite
 
 def weibull_parameters_y(w,z, weibull_delay_months, __cache=[None,None]):
     """

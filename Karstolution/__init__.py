@@ -1,4 +1,4 @@
-from karstolution1_1 import karstolution
+from .karstolution1_1 import karstolution
 
 
 if False:
@@ -42,9 +42,9 @@ if False:
     PSM=karstolution(data,input,output,calculate_drip)
 
     if PSM:
-        print "Finished running Karstolution!"
+        print("Finished running Karstolution!")
     else:
-        print "something happened?!"
+        print("something happened?!")
         
         
     #additional module that will uses pandas and matplot lib to plot the output
