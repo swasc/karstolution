@@ -22,12 +22,28 @@ def weibull_parameters_y(w,z, weibull_delay_months, __cache=[None,None]):
         # guard against bad inputs
         y[np.logical_not(np.isfinite(y))] = 0.001
         y = y/y.sum()
-        #v_1=stats.exponweib(w,z)
-        #y1=v_1.cdf(x)
-        #y=np.append([0],y1[1:]-y1[0:weibull_delay_months-1])
         __cache[0] = (w,z)
         __cache[1] = y
     return y
+
+def weibull_parameters_y_original(w,z, weibull_delay_months, __cache=[None,None]):
+    """
+    Calculate y, derived from the Weibull distribution
+
+    This is slow - so we remember the result for next time, as this
+    tends to get called lots of times with the same values for w and z
+    """
+    if __cache[0] == (w,z,weibull_delay_months):
+        return __cache[1]
+    else:
+        x=np.linspace(0,2,weibull_delay_months)
+        v_1=stats.exponweib(w,z)
+        y1=v_1.cdf(x)
+        y=np.append([0],y1[1:]-y1[0:weibull_delay_months-1])
+        __cache[0] = (w,z)
+        __cache[1] = y
+    return y
+
 
 
 #
@@ -51,6 +67,10 @@ def mix_tracer(volumes, tracer_concs):
     """
     volumes = np.array(volumes)
     tracer_concs = np.array(tracer_concs)
+    # skip any volumes which are zero (this lets us tolerate NaN in tracer_concs
+    # provided that NaN is present for zero volumes)
+    tracer_concs = tracer_concs[volumes>0]
+    volumes = volumes[volumes>0]
     mean_tracer_conc = (volumes*tracer_concs).sum() / volumes.sum()
     return mean_tracer_conc
 
@@ -112,6 +132,12 @@ calculate_isotope_calcite=True):
 
     # use new tracer mixing code
     tracer_mixing_flag = config.get('use_new_tracer_mixing_code', True)
+    # route f8 into ks2 instead of ks1
+    new_f8_routing_flag = config.get('use_new_f8_routing', True)
+    # use previous definition of weibull parameters
+    new_weibull_flag = config.get('use_new_weibull_definition', True)
+    # ratio of the areas of ks2 to ks1
+    area_ratio = config.get('area_ratio', 1.0)
 
     #store size parameters  - soilstore, epikarst, ks1, ks2
     soilsize=config['soilstore']
@@ -170,13 +196,16 @@ calculate_isotope_calcite=True):
     #weibull parameters
     w=config['lambda_weibull'] #data_rest[6][0]
     z=config['k_weibull'] #data_rest[6][1]
-    y = weibull_parameters_y(w,z,weibull_delay_months)
+    if new_weibull_flag:
+        y = weibull_parameters_y(w,z,weibull_delay_months)
+    else:
+        y = weibull_parameters_y_original(w,z,weibull_delay_months)
 
 
     #parameterisable coefficients
     k_f1=config['f1'] #data_rest[0][0]        # f1 from soilstore to epikarst
     k_f3=config['f3'] #data_rest[0][1]        # f3 from epikarst to KS1
-    k_f4=config['f4']                         # f5: from eipkarst to KS2
+    k_f4=config['f4']                         # f4: from eipkarst to KS2
     k_f5=config['f5'] #data_rest[0][2]        # f5 from KS1 to stal5
     k_f6=config['f6'] #data_rest[0][3]        # f6 from KS2 to stal1
     k_f7=config['f7'] #data_rest[0][4]        # f7 overflow from KS2 to KS1
@@ -223,7 +252,8 @@ calculate_isotope_calcite=True):
 
     # f8 is a parallel flow path to f1, proportional but no affecting
     # the level of the soil store
-    f8 = k_f8 * f1
+    if new_f8_routing_flag:
+        f8 = k_f8 * f1
 
     #increases epikarst store volume
     epxstor=epxstorxp+f1
@@ -259,8 +289,26 @@ calculate_isotope_calcite=True):
     if epxstor>episize:
         epxstor=episize
 
+    if not new_f8_routing_flag:
+        if prp>7:
+            f8=prp*k_f8
+        else:
+            f8=0
+    else:
+        #Pauline moved this up in code and changed to have F8 connect to KS2 not KS1
+        #f8 bypass flow from surface rain to KS1
+        # TODO: fix this magic number (rainfall threshold of 7)
+        if prp>7:
+            #f8=prp*k_f8   #changed to below to account for transpiration from KS2
+            f8=(prp-evpt)*k_f8
+        else:
+            f8=0
+
     #fluxes into and out of KS2
-    kststor2=kststor2xp+f4+f8
+    if new_f8_routing_flag:
+        kststor2=kststor2xp+f4+f8
+    else:
+        kststor2=kststor2xp+f4
     if kststor2 > ovcap:
         f7 = calc_flux(k_f7, kststor2-ovcap)
     else:
@@ -268,19 +316,15 @@ calculate_isotope_calcite=True):
     f6 = calc_flux(k_f6, kststor2-f7)
     kststor2=kststor2-f6-f7
 
+
     #ensuring the kststor2 does not exceed user-defined capacity
     if kststor2>ks2size:
         kststor2=ks2size
 
-    #f8 bypass flow from surface rain to KS1
-    # TODO: fix this magic number (rainfall threshold of 7)
-    #if prp>7:
-    #    f8=prp*k_f8
-    #else:
-    #    f8=0
-
     #fluxes into and out of KS1
-    kststor1=kststor1xp+f3+sum(y*dpdf)+f7
+    kststor1=kststor1xp+f3+sum(y*dpdf)+f7*area_ratio
+    if not new_f8_routing_flag:
+        kststor1 += f8
     f5 = calc_flux(k_f5, kststor1)
     kststor1=kststor1-f5
 
@@ -322,10 +366,14 @@ calculate_isotope_calcite=True):
         epx18o=c+d
         epdf[0]=epx18o
 
-    #mixing of kststor2 d18o
+    #mixing of kststor2 d18o  - TODO: needs f8?
     if tracer_mixing_flag:
-        volumes = np.r_[f4, kststor2xp]
-        isotopes = np.r_[epx18o, kststor218oxp]
+        if new_f8_routing_flag:
+            volumes = np.r_[f4, kststor2xp, f8]
+            isotopes = np.r_[epx18o, kststor218oxp, soil18o]
+        else:
+            volumes = np.r_[f4, kststor2xp]
+            isotopes = np.r_[epx18o, kststor218oxp]
         kststor218o = mix_tracer(volumes, isotopes)
     else:
         if f4<0.01:
@@ -338,15 +386,20 @@ calculate_isotope_calcite=True):
 
     #mixing of KS1 d18o
     if tracer_mixing_flag:
-        volumes = np.r_[f3, kststor1xp, y*dpdf, f7]
-        isotopes = np.r_[epx18o, kststor118oxp, epdf, kststor218o]
+        if new_f8_routing_flag:
+            volumes = np.r_[f3, kststor1xp, y*dpdf, f7*area_ratio]
+            isotopes = np.r_[epx18o, kststor118oxp, epdf, kststor218o]
+        else:
+            volumes = np.r_[f3, kststor1xp, y*dpdf, f7*area_ratio, f8]
+            isotopes = np.r_[epx18o, kststor118oxp, epdf, kststor218o, d18o]
         kststor118o = mix_tracer(volumes=volumes, tracer_concs=isotopes)
+
     else:
-        b1=f3+kststor1xp+sum(y*dpdf)+f7
+        b1=f3+kststor1xp+sum(y*dpdf)+f7*area_ratio+f8
         c1=(kststor1xp/b1)*kststor118oxp
         d1=(f3/b1)*epx18o
         e1=(sum(y*dpdf*epdf)/b1)
-        g1=(f7/b1)*kststor218o
+        g1=(f7*area_ratio/b1)*kststor218o
         h1=f8/b1*d18o
         kststor118o=c1+d1+e1+g1+h1
     
@@ -397,6 +450,9 @@ calculate_isotope_calcite=True):
         drip_interval_stal2=9001
     else:
         if calculate_drip==True:
+            # TODO: there is no good reason to convert drip intervals into
+            # integers at this point (floats do crash the code later, but it
+            # is not the right approach to force them to be integers here)
             drip_interval_ks1=int(drip_interval*ks1size/kststor1)
             ks1_temp3=kststor1+prp
             drip_interval_stal3=int(drip_interval*ks1size/ks1_temp3)
