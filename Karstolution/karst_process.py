@@ -67,11 +67,18 @@ def mix_tracer(volumes, tracer_concs):
     """
     volumes = np.array(volumes)
     tracer_concs = np.array(tracer_concs)
-    # skip any volumes which are zero (this lets us tolerate NaN in tracer_concs
-    # provided that NaN is present for zero volumes)
-    tracer_concs = tracer_concs[volumes>0]
-    volumes = volumes[volumes>0]
-    mean_tracer_conc = (volumes*tracer_concs).sum() / volumes.sum()
+    v_total = volumes.sum()
+    if v_total == 0:
+        mean_tracer_conc = tracer_concs.mean()
+    else:
+        # skip any volumes which are zero (this lets us tolerate NaN in tracer_concs
+        # provided that NaN is present for zero volumes)
+        tracer_concs = tracer_concs[volumes>0]
+        volumes = volumes[volumes>0]
+        import warnings
+        with warnings.catch_warnings():
+            warnings.filterwarnings('error')
+            mean_tracer_conc = (volumes*tracer_concs).sum() / v_total
     return mean_tracer_conc
 
 def solve_store(store_volume, store_d18o, inflow_fluxes, 
@@ -250,10 +257,10 @@ calculate_isotope_calcite=True):
     #updating the final soil store level (removing the F1 value)
     soilstor=soilstor-f1
 
-    # f8 is a parallel flow path to f1, proportional but no affecting
-    # the level of the soil store
-    if new_f8_routing_flag:
-        f8 = k_f8 * f1
+    ## f8 is a parallel flow path to f1, proportional but no affecting
+    ## the level of the soil store
+    #if new_f8_routing_flag:
+    #    f8 = k_f8 * f1
 
     #increases epikarst store volume
     epxstor=epxstorxp+f1
@@ -262,8 +269,12 @@ calculate_isotope_calcite=True):
     #diffuse flow leaving epikarst and going to KS1
     #assuming diffuse flow follows a weibull distrubtion
     dpdf[0] = calc_flux(k_diffuse, epxstor-f3)
-    if epxstor > epicap:
-        f4 = calc_flux(k_f4, epxstor-epicap)
+    # f4 (overflow) only activates when epxstor > epicap 
+    # **at the end of the timestep**
+    # TODO: is this documented anywhere? Is it the behaviour we want?
+    # It does change the results if we do it differently.
+    if epxstor - f3 - dpdf[0] > epicap:
+        f4 = calc_flux(k_f4, epxstor - f3 - dpdf[0] - epicap)
     else:
         f4=0
 
