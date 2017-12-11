@@ -8,6 +8,19 @@ def weibull_parameters_y(w,z, weibull_delay_months, __cache=[None,None]):
 
     This is slow - so we remember the result for next time, as this
     tends to get called lots of times with the same values for w and z
+    
+    Inputs
+    ------
+        - *w* 
+        scale parameter, also called `weibull_lambda` in config, `c` in scipy
+        
+        - *z*
+        shape parameter, alsoc called `weibull_k` in config
+        
+        - *weibull_delay_months*
+        the delay at the longest lag time in the pdf (in months)
+        
+    Note: the location parameter is set to zero before calling scipy.weibull_min
     """
     if __cache[0] == (w,z,weibull_delay_months):
         return __cache[1]
