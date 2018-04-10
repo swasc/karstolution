@@ -99,7 +99,7 @@ def solve_store(store_volume, store_d18o, inflow_fluxes,
     # remove outflow - do this first so that mixing doesn't happen instantly
     store_volume = max(0, store_volume - np.sum(outflow_fluxes))
     # calculate d18o after mixing
-    d18o_final = mix_tracers(inflow_fluxes)
+    d18o_final = mix_tracer(inflow_fluxes)
     # TODO....
 
 def calc_flux(k, store_level):
@@ -249,14 +249,17 @@ calculate_isotope_calcite=True):
     #********************************************************************************************
     #starting going through the karst processes in a procedural manner (up-down)
     #making sure the soilstore does not become negative, whilst adding prp and removing evpt
+    # calculate surface flux (f_surface) as a diagnostic to use later
     if soilstorxp + prp - evpt < 0:
         #evpt=0
         #^^^partially agreed can remove the above
         soilstor=0
+        f_surface = - soilstorxp
     # if prp>=7:
         # soilstor=soilstorxp+prp-evpt
     else:
         soilstor=soilstorxp+prp-evpt
+        f_surface = prp-evpt
 
     #ensuring the soilstor does not exceed user-defined capacity
     if soilstor>soilsize:
@@ -357,19 +360,29 @@ calculate_isotope_calcite=True):
         kststor1=ks1size
 
     #mixing and fractionation of soil store d18o
-    e=prp+soilstorxp
-    if e<0.01:
-        e=0.001
-    f=soilstorxp/e
-    g=prp/e
-    # 0.03 term can be changed to enable evaporative fractionation in soil store
-    h_1=d18o+(evpt*k_evapf)
-    #mixing of soil d18o with prp and ???
-    soil18o=(f*soil18oxp)+(g*h_1)
+    if tracer_mixing_flag:
+        # flux into the soil is precip minus evaporation minus implied runoff
+        # (runoff is implied if the soil store fills up)
+        if f_surface < 0:
+            soil18o=soil18oxp
+        else:
+            volumes = np.r_[f_surface, soilstor]
+            isotopes = np.r_[d18o, soil18oxp]
+            soil18o = mix_tracer(volumes, isotopes)
+    else:
+        e=prp+soilstorxp
+        if e<0.01:
+            e=0.001
+        f=soilstorxp/e
+        g=prp/e
+        # 0.03 term can be changed to enable evaporative fractionation in soil store
+        h_1=d18o+(evpt*k_evapf)
+        #mixing of soil d18o with prp and ???
+        soil18o=(f*soil18oxp)+(g*h_1)
 
-    #so if the soil value becomes positive it is reverted to original soild18o. Justified??
-    if soil18o>0.0001:
-        soil18o=soil18oxp
+        #so if the soil value becomes positive it is reverted to original soild18o. Justified??
+        if soil18o>0.0001:
+            soil18o=soil18oxp
 
     if tracer_mixing_flag:
         # mixing and fractionation of epikarst store d18o
@@ -394,7 +407,7 @@ calculate_isotope_calcite=True):
     if tracer_mixing_flag:
         if new_f8_routing_flag:
             volumes = np.r_[f4, kststor2xp, f8]
-            isotopes = np.r_[epx18o, kststor218oxp, soil18o]
+            isotopes = np.r_[epx18o, kststor218oxp, d18o]
         else:
             volumes = np.r_[f4, kststor2xp]
             isotopes = np.r_[epx18o, kststor218oxp]
