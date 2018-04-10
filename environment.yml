@@ -1,4 +1,4 @@
-name: karstolution-py27
+name: karstolution
 channels:
   - defaults
 dependencies:
@@ -6,4 +6,7 @@ dependencies:
   - matplotlib
   - numba
   - numpy
+  - pandas
+  - pyyaml
+  - scipy
 
