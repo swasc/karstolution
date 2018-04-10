@@ -1,6 +1,11 @@
 import math
 from . import evaporation, cmodel_frac, constants
-from numba import jit
+try:
+    from numba import jit
+except ImportError:
+    # do-nothing decorator
+    jit = lambda x:x
+    
 import numpy as np
 
 @jit

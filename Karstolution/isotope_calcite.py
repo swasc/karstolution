@@ -5,7 +5,11 @@ import numpy as np
 #preserving many of the comments. However, all components related to d13C from the original model
 #have been removed (as only d18O is modelled in Karstolution)
 
-from numba import jit
+try:
+    from numba import jit
+except ImportError:
+    # do-nothing decorator
+    jit = lambda x:x
 
 @jit
 def isotope_calcite(d, TC, pCO2, pCO2cave, h, V, phi, d18Oini, tt):

@@ -1,5 +1,9 @@
 import numpy as np
-from numba import jit
+try:
+    from numba import jit
+except ImportError:
+    # do-nothing decorator
+    jit = lambda x:x
 
 @jit
 def evaporation(TC, h, V):

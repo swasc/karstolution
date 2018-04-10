@@ -1,7 +1,11 @@
 import math
 from . import evaporation, cmodel_frac, constants
 import numpy as np
-from numba import jit
+try:
+    from numba import jit
+except ImportError:
+    # do-nothing decorator
+    jit = lambda x:x
 
 @jit
 def O18EVA_MEAN(tmax, TC, pCO2, pCO2cave, h, v, R18_hco_ini, R18_h2o_ini, R18v, HCOMIX, h2o_new,tt):

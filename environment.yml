@@ -4,7 +4,7 @@ channels:
 dependencies:
   - ipywidgets
   - matplotlib
-  - numba
+#  - numba
   - numpy
   - pandas
   - pyyaml
