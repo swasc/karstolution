@@ -1,0 +1,9 @@
+name: karstolution-py27
+channels:
+  - defaults
+dependencies:
+  - ipywidgets
+  - matplotlib
+  - numba
+  - numpy
+
