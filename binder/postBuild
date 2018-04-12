@@ -1,0 +1,14 @@
+# post install script is required for the file upload widget
+# from https://github.com/draperjames/fileupload2binder
+jupyter contrib nbextension install --user
+jupyter nbextension enable --py widgetsnbextension
+jupyter nbextension enable python-markdown/main
+
+# Add the fileupload module.
+jupyter nbextension install --user --py fileupload
+jupyter nbextension enable  --user --py fileupload
+
+# Notebooks w/ extensions that auto-run code must be "trusted"
+# to work the first time
+jupyter trust notebooks/example2.ipynb
+

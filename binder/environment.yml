@@ -3,10 +3,15 @@ channels:
   - defaults
 dependencies:
   - ipywidgets
+  - traitlets
   - matplotlib
-#  - numba
+  - numba
   - numpy
   - pandas
   - pyyaml
   - scipy
+  - pip:
+    - fileupload
+
+  
 
