@@ -136,7 +136,40 @@ def calc_flux(k, store_level):
     Q = min(Q, store_level)
     return Q
 
+def calc_drip_rate(store_level, store_capacity, driprate_store_empty, driprate_store_full):
+    """
+    Calculate drip rate out of a store
 
+    If $S_c$ is the store capacity, $s$ is the store level, and $D_f$ and $D_e$ are
+    drip rates when the store is full and empty, repsectively, then the drip rate is
+    linearly related to the store capacity like
+
+    $$ D = (D_f - D_e) * (s/S_C) + D_e $$
+
+    Inputs
+    ------
+        - *store_level* real
+        The present level in the store (units of length)
+
+        - *store_capacity* real
+        The level of the store when full (units of length)
+
+        - *driprate_store_empty* real
+        The rate of dripping out of the store when the store is empty (units of 1/seconds)
+
+        - *driprate_store_full* real
+        The rate of dripping out of the store when the store is full (units of 1/seconds)
+
+    Returns
+    -------
+        - *driprate* real
+        The rate of dripping out of the store (units of 1/seconds)
+
+    """
+    driprate = (store_level/store_capacity) * (driprate_store_full - driprate_store_empty) + driprate_store_empty
+    assert driprate>=0
+    return driprate
+    
 
 def karst_process(tt,mm,evpt,prp,prpxp,tempp,d18o,d18oxp,dpdf,epdf,soilstorxp,soil18oxp,
 epxstorxp,epx18oxp,kststor1xp,kststor118oxp,kststor2xp,kststor218oxp,config,calculate_drip,cave_temp,
@@ -185,7 +218,9 @@ calculate_isotope_calcite=True):
         ovcap=ks2size-1
 
     #average cave parameters for various months
-    drip_interval = mf['drip_interval'][mm-1]
+    driprate_store_full = mf['driprate_store_full'][mm-1]
+    driprate_store_empty = mf['driprate_store_empty'][mm-1]
+    assert driprate_store_full >= driprate_store_empty
     drip_pco2=mf['drip_pco2'][mm-1]/1000000.0
     cave_pco2 = mf['cave_pco2'][mm-1]/1000000.0
     h = mf['rel_humidity'][mm-1]
@@ -195,8 +230,6 @@ calculate_isotope_calcite=True):
     #making sure cave values don't become negative
     if v<0:
         v=0
-    if drip_interval<0:
-        drip_interval=0
     if drip_pco2<0:
         drip_pco2=0.0000000000000001
     if cave_pco2<0:
@@ -447,65 +480,68 @@ calculate_isotope_calcite=True):
     drip218o=(kststor118o*m)+(p*n)
 
 
-    #if kststor2 is too low then a clearly outlying for the stal
-    if kststor2<0.01:
-        stal1d18o=-99.9
-        drip_interval_ks2=9001
-    else:
-        if calculate_drip==True:
-            #drip-interval: user inputted max drip-interval proportioned by store capacity
-            drip_interval_ks2=int(drip_interval*ks2size/kststor2)
+
+    if calculate_drip==True:
+        #drip-interval: user inputted min/max drip rate proportioned by store capacity
+        driprate = calc_drip_rate(kststor2, ks2size, driprate_store_empty, driprate_store_full)
+        if driprate <= 0:
+            stal1d18o=-99.9
+            drip_interval_ks2=9001
         else:
-            drip_interval_ks2=int(drip_interval)
-        if calculate_isotope_calcite:
-            #running the ISOLUTION part of the model
-            stal1d18o=isotope_calcite(drip_interval_ks2, cave_temp, drip_pco2, cave_pco2, h, v, phi,
-            kststor218o,tt)
+            drip_interval_ks2 = int(1.0/driprate)
+    else:
+        drip_interval_ks2=int(drip_interval)
+    if calculate_isotope_calcite:
+        #running the ISOLUTION part of the model
+        stal1d18o=isotope_calcite(drip_interval_ks2, cave_temp, drip_pco2, cave_pco2, h, v, phi,
+        kststor218o,tt)
 
 
     #same drip interval calculation for epikarst store (stalagmite 4)
-    if epxstor<0.01:
-        stal4d18o=-99.9
-        drip_interval_epi=9001
-    else:
-        if calculate_drip==True:
-            drip_interval_epi=int(drip_interval*episize/epxstor)
+    if calculate_drip==True:
+        driprate = calc_drip_rate(epxstor, episize, driprate_store_empty, driprate_store_full)
+        if driprate <= 0:
+            stal4d18o=-99.9
+            drip_interval_epi=9001
         else:
-            drip_interval_epi=int(drip_interval)
-        if calculate_isotope_calcite:
-            stal4d18o=isotope_calcite(drip_interval_epi, cave_temp, drip_pco2, cave_pco2, h, v, phi,
-            epx18o,tt)
+            drip_interval_epi = int(1.0/driprate)
+    else:
+        drip_interval_epi=int(drip_interval)
+    if calculate_isotope_calcite:
+        stal4d18o=isotope_calcite(drip_interval_epi, cave_temp, drip_pco2, cave_pco2, h, v, phi,
+        epx18o,tt)
 
     #drip interval calculations for Karst Store 1, which includes the bypass stalagmites 2 and 3.
     #Drip interval for these are
-    if kststor1<0.01:
-        stal2d18o=-99.9
-        stal3d18o=-99.9
-        stal5d18o=-99.99
-        drip_interval_ks1=9001
-        drip_interval_stal3=9001
-        drip_interval_stal2=9001
-    else:
-        if calculate_drip==True:
+    if calculate_drip==True:
+        driprate = calc_drip_rate(kststor1, ks1size, driprate_store_empty, driprate_store_full)
+        driprate_stal3 = calc_drip_rate(kststor1+prp, ks1size, driprate_store_empty, driprate_store_full)
+        driprate_stal2 = calc_drip_rate(kststor1+prp+prpxp, ks1size, driprate_store_empty, driprate_store_full)
+        if driprate <=0:
+            stal2d18o=-99.9
+            stal3d18o=-99.9
+            stal5d18o=-99.99
+            drip_interval_ks1=9001
+            drip_interval_stal3=9001
+            drip_interval_stal2=9001
+        else:
             # TODO: there is no good reason to convert drip intervals into
             # integers at this point (floats do crash the code later, but it
             # is not the right approach to force them to be integers here)
-            drip_interval_ks1=int(drip_interval*ks1size/kststor1)
-            ks1_temp3=kststor1+prp
-            drip_interval_stal3=int(drip_interval*ks1size/ks1_temp3)
-            ks1_temp2=ks1_temp3+prpxp
-            drip_interval_stal2=int(drip_interval*ks1size/ks1_temp2)
-        else:
-            drip_interval_ks1=int(drip_interval)
-            drip_interval_stal3=int(drip_interval)
-            drip_interval_stal2=int(drip_interval)
-        if calculate_isotope_calcite:
-            stal5d18o=isotope_calcite(drip_interval_ks1, cave_temp, drip_pco2, cave_pco2, h, v,
-            phi,kststor118o,tt)
-            stal3d18o=isotope_calcite(drip_interval_stal3, cave_temp, drip_pco2, cave_pco2, h, v,
-            phi,drip218o,tt)
-            stal2d18o=isotope_calcite(drip_interval_stal2, cave_temp, drip_pco2, cave_pco2, h, v,
-            phi,drip118o,tt)
+            drip_interval_ks1=int(1.0/driprate)
+            drip_interval_stal2=int(1.0/driprate_stal2)
+            drip_interval_stal3=int(1.0/driprate_stal3)
+    else:
+        drip_interval_ks1=int(drip_interval)
+        drip_interval_stal3=int(drip_interval)
+        drip_interval_stal2=int(drip_interval)
+    if calculate_isotope_calcite:
+        stal5d18o=isotope_calcite(drip_interval_ks1, cave_temp, drip_pco2, cave_pco2, h, v,
+        phi,kststor118o,tt)
+        stal3d18o=isotope_calcite(drip_interval_stal3, cave_temp, drip_pco2, cave_pco2, h, v,
+        phi,drip218o,tt)
+        stal2d18o=isotope_calcite(drip_interval_stal2, cave_temp, drip_pco2, cave_pco2, h, v,
+        phi,drip118o,tt)
 
     #returning the values to karstolution1.1 module to  be written to output
     return [tt,mm,f1,f3,f4,f5,f6,f7,soilstor,epxstor,kststor1,kststor2,soil18o,epx18o,kststor118o,
