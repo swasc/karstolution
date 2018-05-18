@@ -103,6 +103,6 @@ def O18EVA_MEAN(tmax, TC, pCO2, pCO2cave, h, v, R18_hco_ini, R18_h2o_ini, R18v, 
         h2o *= np.NaN
         delta_1 *= np.NaN
     
-    assert(np.isfinite([r_hco18, r_h2o18, hco, h2o, delta_1]).all())
+    #assert(np.isfinite([r_hco18, r_h2o18, hco, h2o, delta_1]).all())
 
     return (r_hco18, r_h2o18, hco, h2o, delta_1)
