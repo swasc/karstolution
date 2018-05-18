@@ -488,7 +488,7 @@ calculate_isotope_calcite=True):
             stal1d18o=-99.9
             drip_interval_ks2=9001
         else:
-            drip_interval_ks2 = int(1.0/driprate)
+            drip_interval_ks2 = (1.0/driprate)
     else:
         drip_interval_ks2=int(drip_interval)
     if calculate_isotope_calcite:
@@ -504,7 +504,7 @@ calculate_isotope_calcite=True):
             stal4d18o=-99.9
             drip_interval_epi=9001
         else:
-            drip_interval_epi = int(1.0/driprate)
+            drip_interval_epi = (1.0/driprate)
     else:
         drip_interval_epi=int(drip_interval)
     if calculate_isotope_calcite:
@@ -528,9 +528,9 @@ calculate_isotope_calcite=True):
             # TODO: there is no good reason to convert drip intervals into
             # integers at this point (floats do crash the code later, but it
             # is not the right approach to force them to be integers here)
-            drip_interval_ks1=int(1.0/driprate)
-            drip_interval_stal2=int(1.0/driprate_stal2)
-            drip_interval_stal3=int(1.0/driprate_stal3)
+            drip_interval_ks1=(1.0/driprate)
+            drip_interval_stal2=(1.0/driprate_stal2)
+            drip_interval_stal3=(1.0/driprate_stal3)
     else:
         drip_interval_ks1=int(drip_interval)
         drip_interval_stal3=int(drip_interval)

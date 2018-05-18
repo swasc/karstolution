@@ -42,15 +42,16 @@ def O18EVA_MEAN(tmax, TC, pCO2, pCO2cave, h, v, R18_hco_ini, R18_h2o_ini, R18v, 
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     #Calculation of the 18R
+    N_times = int(np.ceil(tmax + 1))
     #initialise arrays
-    r_hco18 = np.empty(tmax+1) * np.NaN
-    r_h2o18 = np.empty(tmax+1) * np.NaN
-    HCO = np.empty(tmax+1) * np.NaN
-    hco = np.empty(tmax+1) * np.NaN
-    H2O = np.empty(tmax+1) * np.NaN
-    h2o = np.empty(tmax+1) * np.NaN
-    delta_1 = np.empty(tmax+1) * np.NaN
-
+    r_hco18 = np.empty(N_times) * np.NaN
+    r_h2o18 = np.empty(N_times) * np.NaN
+    HCO = np.empty(N_times) * np.NaN
+    hco = np.empty(N_times) * np.NaN
+    H2O = np.empty(N_times) * np.NaN
+    h2o = np.empty(N_times) * np.NaN
+    delta_1 = np.empty(N_times) * np.NaN
+    
     r_hco18[0] = R18_hco_ini
     r_h2o18[0] = R18_h2o_ini
 
@@ -59,8 +60,9 @@ def O18EVA_MEAN(tmax, TC, pCO2, pCO2cave, h, v, R18_hco_ini, R18_h2o_ini, R18v, 
         #raise RuntimeError('DRIPINTERVALL IS TOO LONG, THE WATERLAYER EVAPORATES COMPLETLY FOR THE GIVEN d (tt={})'.format(tt))
         return (np.NaN, np.NaN, np.NaN, np.NaN, np.NaN, np.NaN)
 
-    dt = 1
-    t=range(1,tmax+1)
+    # adjust dt so that it's roughly 1 second, but divides evenly into tmax
+    t = np.linspace(0, tmax, N_times)
+    dt = t[1] - t[0]
 
     HCO[0] = HCOMIX                                  #Konzentration von HCO3-
     hco[0] = hco_ini                                 #Menge an HCO3-
@@ -72,7 +74,7 @@ def O18EVA_MEAN(tmax, TC, pCO2, pCO2cave, h, v, R18_hco_ini, R18_h2o_ini, R18v, 
     #"Restwassermenge" und daher konstant
 
 
-    for ii in t:
+    for ii in range(1, len(t)):
 
         delta_1[ii] = (H2O[ii-1]/1000/0.001)
         delta = (H2O[ii-1]/1000)/0.001
@@ -100,5 +102,7 @@ def O18EVA_MEAN(tmax, TC, pCO2, pCO2cave, h, v, R18_hco_ini, R18_h2o_ini, R18v, 
         hco *= np.NaN
         h2o *= np.NaN
         delta_1 *= np.NaN
+    
+    assert(np.isfinite([r_hco18, r_h2o18, hco, h2o, delta_1]).all())
 
     return (r_hco18, r_h2o18, hco, h2o, delta_1)

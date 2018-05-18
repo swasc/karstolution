@@ -13,6 +13,25 @@ except ImportError:
 
 @jit
 def isotope_calcite(d, TC, pCO2, pCO2cave, h, V, phi, d18Oini, tt):
+    """
+    The isolution part of the model
+    
+    TODO:docstring
+    
+    Inputs
+    ------
+        - *d* 
+            driprate
+        - *TC*
+            air temperature in degC
+        - *drip_pco2*
+    
+    Usage example:
+    --------------
+    isotope_calcite(drip_interval_ks1, cave_temp, drip_pco2, cave_pco2, h, v,
+        phi,kststor118o,tt)
+    
+    """
     #boundary value constant parameters (equiv of BOUNDARY)
     R2smow = 0.00015575
     R18smow = 0.0020052
