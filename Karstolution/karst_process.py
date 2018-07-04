@@ -167,7 +167,6 @@ def calc_drip_rate(store_level, store_capacity, driprate_store_empty, driprate_s
 
     """
     driprate = (store_level/store_capacity) * (driprate_store_full - driprate_store_empty) + driprate_store_empty
-    assert driprate>=0
     return driprate
     
 
@@ -220,6 +219,8 @@ calculate_isotope_calcite=True):
     #average cave parameters for various months
     driprate_store_full = mf['driprate_store_full'][mm-1]
     driprate_store_empty = mf['driprate_store_empty'][mm-1]
+    # this gets fed to isolution when "calculate_drip" is set to false
+    drip_interval = mf['drip_interval'][mm-1]
     assert driprate_store_full >= driprate_store_empty
     drip_pco2=mf['drip_pco2'][mm-1]/1000000.0
     cave_pco2 = mf['cave_pco2'][mm-1]/1000000.0
@@ -490,7 +491,7 @@ calculate_isotope_calcite=True):
         else:
             drip_interval_ks2 = (1.0/driprate)
     else:
-        drip_interval_ks2=int(drip_interval)
+        drip_interval_ks2=drip_interval
     if calculate_isotope_calcite:
         #running the ISOLUTION part of the model
         stal1d18o=isotope_calcite(drip_interval_ks2, cave_temp, drip_pco2, cave_pco2, h, v, phi,
@@ -506,7 +507,7 @@ calculate_isotope_calcite=True):
         else:
             drip_interval_epi = (1.0/driprate)
     else:
-        drip_interval_epi=int(drip_interval)
+        drip_interval_epi=drip_interval
     if calculate_isotope_calcite:
         stal4d18o=isotope_calcite(drip_interval_epi, cave_temp, drip_pco2, cave_pco2, h, v, phi,
         epx18o,tt)
@@ -532,9 +533,9 @@ calculate_isotope_calcite=True):
             drip_interval_stal2=(1.0/driprate_stal2)
             drip_interval_stal3=(1.0/driprate_stal3)
     else:
-        drip_interval_ks1=int(drip_interval)
-        drip_interval_stal3=int(drip_interval)
-        drip_interval_stal2=int(drip_interval)
+        drip_interval_ks1=drip_interval
+        drip_interval_stal3=drip_interval
+        drip_interval_stal2=drip_interval
     if calculate_isotope_calcite:
         stal5d18o=isotope_calcite(drip_interval_ks1, cave_temp, drip_pco2, cave_pco2, h, v,
         phi,kststor118o,tt)
