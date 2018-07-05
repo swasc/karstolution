@@ -14,7 +14,7 @@ except ImportError:
     jit = lambda x:x
 
 @jit
-def isotope_calcite(d, TC, pCO2, pCO2cave, h, V, phi, d18Oini, tt):
+def isotope_calcite(d, TC, pCO2, pCO2cave, h, V, phi, d18Oini, tt, full_output=False):
     """
     The isolution part of the model
     
@@ -163,7 +163,17 @@ def isotope_calcite(d, TC, pCO2, pCO2cave, h, V, phi, d18Oini, tt):
 
         d18Ovapor = (Rv18/R18smow - 1)*1000
 
-        return d18Ocalcite
+        ret = d18Ocalcite
 
     else:
-        return np.NaN
+        ret = np.NaN
+    
+    if full_output:
+        # some copy-and-paste from O18EVA_MEAN 
+        # (with drip interval, d, instead of tmax)
+        N_times = int(np.ceil(d + 1))
+        t = np.linspace(0, d, N_times)
+        data = {'r_hco18':r_hco18, 'r_h2o18':r_h2o18, 'hco':hco, 'h2o':h2o, 'time':t}
+        ret = (ret,data)
+    
+    return ret
