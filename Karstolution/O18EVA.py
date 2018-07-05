@@ -81,12 +81,12 @@ def O18EVA(tmax, TC, pCO2, pCO2cave, h, v, R18_hco_ini, R18_h2o_ini, R18v, HCOMI
 
         delta = (H2O[ii-1]/1000.)/0.001
 
-        #Neue Wassermenge
+        # Update the state of aqueous solution to present timestep
         h2o[ii] = (h2o[ii-1] - eva*dt)              #Water (mol)
         d_h2o = -eva                              #Evaporationrate (mol/l)
         H2O[ii] = (h2o[ii]*18*1e-3)               #Water (l)
 
-        #Verdundstung
+        #Evaporation
         HCO_temp = (HCO[ii-1] - HCO_EQ) * np.exp(-dt/(delta/alpha_p)) + HCO_EQ          #HCO3- concentration after timeintervall dt
         hco[ii] = (HCO_temp * H2O[ii-1])                                         #HCO3- mass (mol)
 

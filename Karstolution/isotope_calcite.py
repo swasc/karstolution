@@ -1,5 +1,7 @@
 from . import constants, evaporation, cmodel_frac, O18EVA_MEAN, O18EVA
 import numpy as np
+import math
+
 #main module for the ISOLUTION part of the Karstolution model, which deals with in-cave
 #isotope fractionation. This is a translation of the matlab code from Deininger et al. (2012)
 #preserving many of the comments. However, all components related to d13C from the original model
@@ -21,10 +23,24 @@ def isotope_calcite(d, TC, pCO2, pCO2cave, h, V, phi, d18Oini, tt):
     Inputs
     ------
         - *d* 
-            driprate
+            drip interval (s)
         - *TC*
             air temperature in degC
-        - *drip_pco2*
+        - *pCO2*
+            CO2 dissolved in drip water (ppmV -- ?)
+        - *pCO2cave*
+            CO2 in cave air (ppmV -- ?)
+        - *h*
+            humidity (percent, or 0--1 ?)
+        - *V*
+            ventilation (m/s ?)
+        - *phi*
+            mixing parameter for splash (1-no splash, 0-entire drop lost to splash)
+        - *d18Oini*
+            initial d18O of drip water (?)
+        - *tt*
+            timestep (months)
+
     
     Usage example:
     --------------
@@ -137,11 +153,12 @@ def isotope_calcite(d, TC, pCO2, pCO2cave, h, V, phi, d18Oini, tt):
 
     tmp = np.isnan(r_hco18)
     if tmp.all() != True:
-
-        r_hco18_mean = np.sum( (r_hco18[:-1] + np.diff(r_hco18,n=1)/2.) * (-np.diff(hco,n=1) / (hco[0]-hco[-1]) ))
+        # use math.fsum to improve accuracy, compared to numpy.sum
+        r_hco18_mean = math.fsum( (r_hco18[:-1] + np.diff(r_hco18,n=1)/2.) * (-np.diff(hco,n=1) / (hco[0]-hco[-1]) ))
         d18Ocalcite = (r_hco18_mean*(e18_hco_caco + 1)/R18vpdb - 1)*1000
+        (r_hco18[[0,-1]]*(e18_hco_caco + 1)/R18vpdb-1)*1000
 
-        r_h2o18_mean = np.sum( (r_h2o18[:-1] + np.diff(r_h2o18,n=1)/2.) * (-np.diff(h2o,n=1) / (h2o[0]-h2o[-1]) ))
+        r_h2o18_mean = math.fsum( (r_h2o18[:-1] + np.diff(r_h2o18,n=1)/2.) * (-np.diff(h2o,n=1) / (h2o[0]-h2o[-1]) ))
         d18Owater = (r_h2o18_mean/R18smow - 1)*1000
 
         d18Ovapor = (Rv18/R18smow - 1)*1000
