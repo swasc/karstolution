@@ -47,18 +47,20 @@ def O18EVA(tmax, TC, pCO2, pCO2cave, h, v, R18_hco_ini, R18_h2o_ini, R18v, HCOMI
     N_times = int(np.ceil(tmax + 1))
     
     #initialise arrays
-    r_hco18 = np.empty(N_times) * np.NaN
-    r_h2o18 = np.empty(N_times) * np.NaN
-    HCO = np.empty(N_times) * np.NaN
-    hco = np.empty(N_times) * np.NaN
-    H2O = np.empty(N_times) * np.NaN
-    h2o = np.empty(N_times) * np.NaN
+    init = np.empty(N_times)
+    init[:] = np.NaN
+    r_hco18 = init.copy()
+    r_h2o18 = init.copy()
+    HCO = init.copy()
+    hco = init.copy()
+    H2O = init.copy()
+    h2o = init.copy()
 
     r_hco18[0] = R18_hco_ini
     r_h2o18[0] = R18_h2o_ini
 
 
-    if tmax > np.floor(h2o_ini/eva):
+    if eva > 0 and tmax > np.floor(h2o_ini/eva):
         tmax = int(np.floor(h2o_ini/eva))
         #raise RuntimeError('DRIPINTERVALL IS TOO LONG, THE WATERLAYER EVAPORATES COMPLETLY FOR THE GIVEN d (tt={})'.format(tt))
         return (np.NaN, np.NaN, np.NaN, np.NaN, np.NaN, np.NaN)
@@ -93,7 +95,26 @@ def O18EVA(tmax, TC, pCO2, pCO2cave, h, v, R18_hco_ini, R18_h2o_ini, R18v, HCOMI
         HCO[ii] = (HCO_temp * (H2O[ii-1]/H2O[ii]))      #HCO3- concentration after timeintervall dt and the evaporation of water
 
         r_hco18[ii] = (r_hco18[ii-1] + ((eps_m*(hco[ii]-hco[ii-1])/hco[ii]-1/T) * r_hco18[ii-1] + abl/T*r_h2o18[ii-1]) * dt)
-        r_h2o18[ii] = (r_h2o18[ii-1] + ((hco[ii]/h2o[ii]/T - f/abl/h2o[ii]*(hco[ii]-hco[ii-1]) * r_hco18[ii] + (d_h2o/h2o[ii]*(a*avl/(1-h)-1) - hco[ii]/h2o[ii]*abl/T) * r_h2o18[ii-1] - a*h/(1-h)*R18v/h2o[ii]*d_h2o) * dt))
+        if eva > 0:
+            r_h2o18[ii] = (r_h2o18[ii-1] + 
+                            ( ( hco[ii]/h2o[ii]/T 
+                                - f/abl/h2o[ii]*(hco[ii]-hco[ii-1]) * r_hco18[ii] 
+                                + ( d_h2o/h2o[ii]*(a*avl/(1-h)-1) - hco[ii]/h2o[ii]*abl/T) * r_h2o18[ii-1] 
+                                - a*h/(1-h)*R18v/h2o[ii]*d_h2o
+                              ) * dt
+                            )
+                           )
+        else:
+            # in the limit as eva -> 0, h=1, and d_h2o=0 
+            # - so the commented term is zero
+            r_h2o18[ii] = (r_h2o18[ii-1] + 
+                            ( ( hco[ii]/h2o[ii]/T 
+                                - f/abl/h2o[ii]*(hco[ii]-hco[ii-1]) * r_hco18[ii] 
+                                + ( d_h2o/h2o[ii]*(a*avl/(1-h)-1) - hco[ii]/h2o[ii]*abl/T) * r_h2o18[ii-1] 
+                                #- a*h/(1-h)*R18v/h2o[ii]*d_h2o
+                              ) * dt
+                            )
+                           )
 
     #assert np.isnan( np.array([r_hco18[-1], r_h2o18[-1], HCO[-1], hco[-1], H2O[-1], h2o[-1]])  ).sum() == 0
 

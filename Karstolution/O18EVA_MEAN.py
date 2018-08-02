@@ -51,7 +51,7 @@ def O18EVA_MEAN(tmax, TC, pCO2, pCO2cave, h, v, R18_hco_ini, R18_h2o_ini, R18v, 
     H2O = np.empty(N_times) * np.NaN
     h2o = np.empty(N_times) * np.NaN
     delta_1 = np.empty(N_times) * np.NaN
-    
+
     r_hco18[0] = R18_hco_ini
     r_h2o18[0] = R18_h2o_ini
 
@@ -93,7 +93,26 @@ def O18EVA_MEAN(tmax, TC, pCO2, pCO2cave, h, v, R18_hco_ini, R18_h2o_ini, R18v, 
         HCO[ii] = (HCO_temp * (H2O[ii-1]/H2O[ii]))      #HCO3- concentration after timeintervall dt and the evaporation of water
 
         r_hco18[ii] = (r_hco18[ii-1] + ((eps_m*(hco[ii]-hco[ii-1])/hco[ii]-1/T) * r_hco18[ii-1] + abl/T*r_h2o18[ii-1]) * dt)
-        r_h2o18[ii] = (r_h2o18[ii-1] + ((hco[ii]/h2o[ii]/T - f/abl/h2o[ii]*(hco[ii]-hco[ii-1]) * r_hco18[ii] + (d_h2o/h2o[ii]*(a*avl/(1-h)-1) - hco[ii]/h2o[ii]*abl/T) * r_h2o18[ii-1] - a*h/(1-h)*R18v/h2o[ii]*d_h2o) * dt))
+        if eva > 0:
+            r_h2o18[ii] = (r_h2o18[ii - 1] +
+                           ((hco[ii] / h2o[ii] / T - f / abl / h2o[ii] *
+                             (hco[ii] - hco[ii - 1]) * r_hco18[ii] +
+                             (d_h2o / h2o[ii] *
+                              (a * avl /
+                               (1 - h) - 1) - hco[ii] / h2o[ii] * abl / T
+                              ) * r_h2o18[ii - 1] - a * h /
+                             (1 - h) * R18v / h2o[ii] * d_h2o) * dt))
+        else:
+            # remove terms which are zero in the limit as eva-->0
+            r_h2o18[ii] = (r_h2o18[ii - 1] +
+                           ((hco[ii] / h2o[ii] / T - f / abl / h2o[ii] *
+                             (hco[ii] - hco[ii - 1]) * r_hco18[ii]
+                             #+ (d_h2o / h2o[ii] *
+                             # (a * avl /
+                             #  (1 - h) - 1) - hco[ii] / h2o[ii] * abl / T
+                             # ) * r_h2o18[ii - 1] - a * h /
+                             # (1 - h) * R18v / h2o[ii] * d_h2o
+                             ) * dt))
 
     if tmax > np.floor(h2o_ini/eva):
         raise RuntimeError('Error in O18EVA_MEAN.py')
@@ -102,7 +121,7 @@ def O18EVA_MEAN(tmax, TC, pCO2, pCO2cave, h, v, R18_hco_ini, R18_h2o_ini, R18v, 
         hco *= np.NaN
         h2o *= np.NaN
         delta_1 *= np.NaN
-    
+
     #assert(np.isfinite([r_hco18, r_h2o18, hco, h2o, delta_1]).all())
 
     return (r_hco18, r_h2o18, hco, h2o, delta_1)
