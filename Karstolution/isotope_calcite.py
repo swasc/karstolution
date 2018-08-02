@@ -71,6 +71,24 @@ def isotope_calcite(d, TC, pCO2, pCO2cave, h, V, phi, d18Oini, tt, full_output=F
     HCOSOIL = outputsoil[2][2]                   #HCO3- concentration, with respect to soil pCO2 (mol/l)
     HCOCAVE = outputcave[2][2]/np.sqrt(0.8)    #HCO3- concentration, with respect to cave pCO2 (mol/l)
 
+    # if the apparent equilibrium concentration (HCOCAVE) is greater than
+    # the incoming drip's concentration (HCOSOIL) then the HCO gradient
+    # between drip water and cave is in the wrong direction, or too small
+    # to drive calcite precipitation. Return NaN in this case.
+    # This is a little bit conservative because it ignores the possibility
+    # that evaporation will occur, thereby increasing the dripwater
+    # concentration enough to drive precipitation.  On the other hand,
+    # the sqrt(0.8) factor, above, is used to compute an "apparent" equilibrium
+    # concentration which is only strictly valid when the gradient is large.
+    # see Kaufmann (2008) https://doi.org/10.1016/S0012-821X(03)00369-8
+    if HCOSOIL <= HCOCAVE:
+        ret = np.NaN
+        if full_output:
+            data = {'r_hco18':np.NaN, 'r_h2o18':np.NaN, 'hco':np.NaN, 'h2o':np.NaN, 'time':np.NaN}
+            ret = (ret,data)
+        return ret
+
+
     #Mol mass of the water, with respect to the volume of a single box (mol)
     h2o_ini = 0.1/18
     #Mol mass of the HCO3-(soil), with respect to the volume of a single box (mol)
