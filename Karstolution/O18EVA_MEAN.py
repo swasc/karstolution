@@ -1,3 +1,4 @@
+from __future__ import division
 import math
 from . import evaporation, cmodel_frac, constants
 import numpy as np
@@ -55,7 +56,7 @@ def O18EVA_MEAN(tmax, TC, pCO2, pCO2cave, h, v, R18_hco_ini, R18_h2o_ini, R18v, 
     r_hco18[0] = R18_hco_ini
     r_h2o18[0] = R18_h2o_ini
 
-    if tmax > np.floor(h2o_ini/eva):
+    if eva > 0 and tmax > np.floor(h2o_ini/eva):
         tmax = int(np.floor(h2o_ini/eva))
         #raise RuntimeError('DRIPINTERVALL IS TOO LONG, THE WATERLAYER EVAPORATES COMPLETLY FOR THE GIVEN d (tt={})'.format(tt))
         return (np.NaN, np.NaN, np.NaN, np.NaN, np.NaN, np.NaN)
@@ -114,7 +115,7 @@ def O18EVA_MEAN(tmax, TC, pCO2, pCO2cave, h, v, R18_hco_ini, R18_h2o_ini, R18v, 
                              # (1 - h) * R18v / h2o[ii] * d_h2o
                              ) * dt))
 
-    if tmax > np.floor(h2o_ini/eva):
+    if eva > 0 and tmax > np.floor(h2o_ini/eva):
         raise RuntimeError('Error in O18EVA_MEAN.py')
         r_hco18 *= np.NaN
         r_h2o18 *= np.NaN

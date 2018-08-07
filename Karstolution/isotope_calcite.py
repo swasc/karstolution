@@ -1,3 +1,4 @@
+from __future__ import division
 from . import constants, evaporation, cmodel_frac, O18EVA_MEAN, O18EVA
 import numpy as np
 import math

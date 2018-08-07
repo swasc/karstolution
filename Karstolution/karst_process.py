@@ -1,3 +1,4 @@
+from __future__ import division
 from scipy import stats
 import numpy as np
 from .isotope_calcite import isotope_calcite

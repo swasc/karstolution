@@ -1,3 +1,5 @@
+from __future__ import division
+
 import math
 from . import evaporation, cmodel_frac, constants
 try:
@@ -38,7 +40,7 @@ def O18EVA(tmax, TC, pCO2, pCO2cave, h, v, R18_hco_ini, R18_h2o_ini, R18v, HCOMI
     avl = ((-7356./TK + 15.38)/1000. + 1)
     abl = 1/(e18_hco_h2o + 1)
     a = 1/1.008*1.003
-    f = 1/6
+    f = 1/6.
 
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -106,11 +108,12 @@ def O18EVA(tmax, TC, pCO2, pCO2cave, h, v, R18_hco_ini, R18_h2o_ini, R18v, HCOMI
                            )
         else:
             # in the limit as eva -> 0, h=1, and d_h2o=0 
-            # - so the commented term is zero
+            # - so the commented terms are zero
             r_h2o18[ii] = (r_h2o18[ii-1] + 
                             ( ( hco[ii]/h2o[ii]/T 
                                 - f/abl/h2o[ii]*(hco[ii]-hco[ii-1]) * r_hco18[ii] 
-                                + ( d_h2o/h2o[ii]*(a*avl/(1-h)-1) - hco[ii]/h2o[ii]*abl/T) * r_h2o18[ii-1] 
+                                #+ ( d_h2o/h2o[ii]*(a*avl/(1-h)-1) * r_h2o18[ii-1]
+                                - hco[ii]/h2o[ii]*abl/T * r_h2o18[ii-1] 
                                 #- a*h/(1-h)*R18v/h2o[ii]*d_h2o
                               ) * dt
                             )

@@ -30,6 +30,12 @@ def test_no_evaporation():
           h=1.0, V=0.0, phi=1.0, d18Oini=0, tt=1) )
     print(ic)
 
+def test_zero_ventilation():
+    ic = (isotope_calcite(d=500., TC=10., pCO2=16000., pCO2cave=6000.,
+          h=0.95, V=0.0, phi=1.0, d18Oini=0, tt=1) )
+    print(ic)
+
+
 def test_evaporation_tends_to_zero():
     # evaporation is zero
     ic1 = (isotope_calcite(d=500., TC=10., pCO2=16000., pCO2cave=6000.,
@@ -37,8 +43,23 @@ def test_evaporation_tends_to_zero():
     # evaporation close to zero
     ic2 = (isotope_calcite(d=500., TC=10., pCO2=16000., pCO2cave=6000.,
           h=0.9999, V=0.0001, phi=1.0, d18Oini=0, tt=1) )
+    # evaporation closer to zero
+    ic3 = (isotope_calcite(d=500., TC=10., pCO2=16000., pCO2cave=6000.,
+          h=0.999999, V=0.000001, phi=1.0, d18Oini=0, tt=1) )
+    # evaporation close to zero, but h not 1.0
+    ic4 = (isotope_calcite(d=500., TC=10., pCO2=16000., pCO2cave=6000.,
+          h=0.7, V=1e-6, phi=1.0, d18Oini=0, tt=1) )
+    print(ic1,ic2,ic3,ic4)
+    assert abs(ic1-ic3) < 1e-4
+
+def test_humidity_sensitivity_when_evaporation_tends_to_zero():
+    ic1 = (isotope_calcite(d=500., TC=10., pCO2=16000., pCO2cave=6000.,
+          h=0.99, V=1e-7, phi=1.0, d18Oini=0, tt=1) )
+    # evaporation close to zero
+    ic2 = (isotope_calcite(d=500., TC=10., pCO2=16000., pCO2cave=6000.,
+          h=0.7, V=1e-7, phi=1.0, d18Oini=0, tt=1) )
     print(ic1,ic2)
-    assert abs(ic1-ic2) < 1e-4
+     
 
 
 def test_no_gradient_no_evaporation():
@@ -56,6 +77,8 @@ def test_no_gradient_weak_evaporation():
     print(ic)
 
 if __name__ == "__main__":
-    test_no_evaporation()
-    test_evaporation_tends_to_zero()
-    test_no_gradient_weak_evaporation()
+    #test_no_evaporation()
+    #test_evaporation_tends_to_zero()
+    #test_no_gradient_weak_evaporation()
+    test_zero_ventilation()
+    #test_humidity_sensitivity_when_evaporation_tends_to_zero()
