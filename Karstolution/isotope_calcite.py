@@ -19,7 +19,6 @@ def isotope_calcite(d, TC, pCO2, pCO2cave, h, V, phi, d18Oini, tt, full_output=F
     """
     The isolution part of the model
     
-    TODO:docstring
     
     Inputs
     ------
@@ -42,6 +41,15 @@ def isotope_calcite(d, TC, pCO2, pCO2cave, h, V, phi, d18Oini, tt, full_output=F
         - *tt*
             timestep (months)
 
+    Returns
+    -------
+        - *(d18Ocalcite, WMix_mm_per_year)*
+            if `full_output==False`, return calcite d18O in permille VPDB and
+            growth rate in mm per year
+        - *(d18Ocalcite, WMix_mm_per_year), data*
+            if `full_output==True`, also return *data* a dict of time-evolved 
+            chemical properties in the dripwater
+
     
     Usage example:
     --------------
@@ -54,12 +62,15 @@ def isotope_calcite(d, TC, pCO2, pCO2cave, h, V, phi, d18Oini, tt, full_output=F
     R18smow = 0.0020052
     R18vpdb = 0.0020672
 
+    # depth of fluid layer on the stalagmite surface[m]
+    delta = 1e-4
+
     eva=evaporation.evaporation(TC, h, V)   #Evaporationrate (mol/l)
     e18_hco_caco, e18_hco_h2o, a18_m = cmodel_frac.cmodel_frac(TC)       #Fractionation factors
     TK = 273.15 + TC            #Absolute temperature (K)
     #Tau precipitation (s); t=d/a (according to Baker 98)
-    Z = 0.0001/(1.188e-011 * TC**3 - 1.29e-011 * TC**2 + 7.875e-009 * TC + 4.844e-008)
     alpha = (1.188e-011 * TC**3 - 1.29e-011 * TC**2 + 7.875e-009 * TC + 4.844e-008)
+    Z = delta/alpha
     #Tau buffering, after Dreybrodt and Scholz (2010)
     T = 125715.87302 - 16243.30688*TC + 1005.61111*TC**2 - 32.71852*TC**3 + 0.43333*TC**4
 
@@ -72,6 +83,12 @@ def isotope_calcite(d, TC, pCO2, pCO2cave, h, V, phi, d18Oini, tt, full_output=F
     HCOSOIL = outputsoil[2][2]                   #HCO3- concentration, with respect to soil pCO2 (mol/l)
     HCOCAVE = outputcave[2][2]/np.sqrt(0.8)    #HCO3- concentration, with respect to cave pCO2 (mol/l)
 
+    # Ca concentrations, for calculating precipitation rate
+    CASOIL = outputsoil[2][0]
+    CACAVE = outputcave[2][0]
+    # Excess calcium accounting for inhibiting effects [mol/m3]
+    CaEx = ( CASOIL - CACAVE / np.sqrt(0.8) ) * 1e3
+
     # if the apparent equilibrium concentration (HCOCAVE) is greater than
     # the incoming drip's concentration (HCOSOIL) then the HCO gradient
     # between drip water and cave is in the wrong direction, or too small
@@ -83,7 +100,7 @@ def isotope_calcite(d, TC, pCO2, pCO2cave, h, V, phi, d18Oini, tt, full_output=F
     # concentration which is only strictly valid when the gradient is large.
     # see Kaufmann (2008) https://doi.org/10.1016/S0012-821X(03)00369-8
     if HCOSOIL <= HCOCAVE:
-        ret = np.NaN
+        ret = np.NaN, 0.0
         if full_output:
             data = {'r_hco18':np.NaN, 'r_h2o18':np.NaN, 'hco':np.NaN, 'h2o':np.NaN, 'time':np.NaN}
             ret = (ret,data)
@@ -162,6 +179,20 @@ def isotope_calcite(d, TC, pCO2, pCO2cave, h, V, phi, d18Oini, tt, full_output=F
         if np.isnan(r18mix) or np.isnan(r18res):
             break
 
+    # initial growth rate estimate, assuming no splashing/mixing
+    W0 = 0.10009 / 2689 * delta / d * ( 1 - np.exp(-d / Z) ) * CaEx
+    # growth rate, taking into account that part of the drip is lost to splash
+    # (mixing process) truncated at 100 drips
+    n_drip = 100
+    A = ( 1 - phi )**n_drip * np.exp(-n_drip * d / Z)
+    B = 0
+    for ii in range(n_drip):
+        B = B + ( 1 - phi )**ii * np.exp(-ii * d / Z)
+    # final growth rate estimate
+    lambda_splash = A + phi * B
+    WMix = W0 * lambda_splash
+    seconds_peryear = 365.2425*24*60*60
+    WMix_mm_per_year = WMix*1000*seconds_peryear
 
     r_hco18, r_h2o18, hco, h2o, delta_1  = O18EVA_MEAN.O18EVA_MEAN(d,
                 TC, pCO2, pCO2cave, h, V, r_hco18_mix, r_h2o18_mix, Rv18,
@@ -182,17 +213,21 @@ def isotope_calcite(d, TC, pCO2, pCO2cave, h, V, phi, d18Oini, tt, full_output=F
 
         d18Ovapor = (Rv18/R18smow - 1)*1000
 
-        ret = d18Ocalcite
+        ret = d18Ocalcite, WMix_mm_per_year
 
     else:
-        ret = np.NaN
+        ret = np.NaN, 0.0
     
     if full_output:
+        # properties as function of time between drips
         # some copy-and-paste from O18EVA_MEAN 
         # (with drip interval, d, instead of tmax)
         N_times = int(np.ceil(d + 1))
         t = np.linspace(0, d, N_times)
-        data = {'r_hco18':r_hco18, 'r_h2o18':r_h2o18, 'hco':hco, 'h2o':h2o, 'time':t}
+        data = {'r_hco18':r_hco18, 'r_h2o18':r_h2o18, 'hco':hco, 'h2o':h2o, 'time':t, 
+                'd18Ocalcite':(r_hco18*(e18_hco_caco + 1)/R18vpdb - 1)*1000,
+                'd18Owater':(r_h2o18/R18smow - 1)*1000},
+                
         ret = (ret,data)
     
     return ret

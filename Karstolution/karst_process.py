@@ -95,7 +95,7 @@ def mix_tracer(volumes, tracer_concs):
             mean_tracer_conc = (volumes*tracer_concs).sum() / v_total
     return mean_tracer_conc
 
-def solve_store(store_volume, store_d18o, inflow_fluxes, 
+def solve_store(store_volume, store_d18o, inflow_fluxes,
                 inflow_d18O, outflow_fluxes):
     # remove outflow - do this first so that mixing doesn't happen instantly
     store_volume = max(0, store_volume - np.sum(outflow_fluxes))
@@ -169,7 +169,7 @@ def calc_drip_rate(store_level, store_capacity, driprate_store_empty, driprate_s
     """
     driprate = (store_level/store_capacity) * (driprate_store_full - driprate_store_empty) + driprate_store_empty
     return driprate
-    
+
 
 def karst_process(tt,mm,evpt,prp,prpxp,tempp,d18o,d18oxp,dpdf,epdf,soilstorxp,soil18oxp,
 epxstorxp,epx18oxp,kststor1xp,kststor118oxp,kststor2xp,kststor218oxp,config,calculate_drip,cave_temp,
@@ -280,6 +280,9 @@ calculate_isotope_calcite=True):
     if not calculate_isotope_calcite:
         stal1d18o,stal2d18o,stal3d18o,stal4d18o,stal5d18o = (np.NaN, np.NaN,
                                                         np.NaN, np.NaN, np.NaN)
+        (stal1_growth_rate, stal2_growth_rate, stal3_growth_rate,
+        stal4_growth_rate, stal5_growth_rate) = (
+            np.NaN, np.NaN, np.NaN, np.NaN, np.NaN)
 
     #********************************************************************************************
     #starting going through the karst processes in a procedural manner (up-down)
@@ -291,7 +294,7 @@ calculate_isotope_calcite=True):
         soilstor=0
         f_surface = - soilstorxp
     # if prp>=7:
-        # soilstor=soilstorxp+prp-evpt
+    # soilstor=soilstorxp+prp-evpt
     else:
         soilstor=soilstorxp+prp-evpt
         f_surface = prp-evpt
@@ -320,7 +323,7 @@ calculate_isotope_calcite=True):
     #diffuse flow leaving epikarst and going to KS1
     #assuming diffuse flow follows a weibull distrubtion
     dpdf[0] = calc_flux(k_diffuse, epxstor-f3)
-    # f4 (overflow) only activates when epxstor > epicap 
+    # f4 (overflow) only activates when epxstor > epicap
     # **at the end of the timestep**
     # TODO: is this documented anywhere? Is it the behaviour we want?
     # It does change the results if we do it differently.
@@ -474,7 +477,7 @@ calculate_isotope_calcite=True):
         g1=(f7*area_ratio/b1)*kststor218o
         h1=f8/b1*d18o
         kststor118o=c1+d1+e1+g1+h1
-    
+
     #bypass flow (from epikarst and direct from rain)
     p=d18o
     r=d18oxp
@@ -495,7 +498,7 @@ calculate_isotope_calcite=True):
         drip_interval_ks2=drip_interval
     if calculate_isotope_calcite:
         #running the ISOLUTION part of the model
-        stal1d18o=isotope_calcite(drip_interval_ks2, cave_temp, drip_pco2, cave_pco2, h, v, phi,
+        stal1d18o,stal1_growth_rate=isotope_calcite(drip_interval_ks2, cave_temp, drip_pco2, cave_pco2, h, v, phi,
         kststor218o,tt)
 
 
@@ -510,7 +513,7 @@ calculate_isotope_calcite=True):
     else:
         drip_interval_epi=drip_interval
     if calculate_isotope_calcite:
-        stal4d18o=isotope_calcite(drip_interval_epi, cave_temp, drip_pco2, cave_pco2, h, v, phi,
+        stal4d18o,stal4_growth_rate=isotope_calcite(drip_interval_epi, cave_temp, drip_pco2, cave_pco2, h, v, phi,
         epx18o,tt)
 
     #drip interval calculations for Karst Store 1, which includes the bypass stalagmites 2 and 3.
@@ -538,17 +541,18 @@ calculate_isotope_calcite=True):
         drip_interval_stal3=drip_interval
         drip_interval_stal2=drip_interval
     if calculate_isotope_calcite:
-        stal5d18o=isotope_calcite(drip_interval_ks1, cave_temp, drip_pco2, cave_pco2, h, v,
+        stal5d18o,stal5_growth_rate=isotope_calcite(drip_interval_ks1, cave_temp, drip_pco2, cave_pco2, h, v,
         phi,kststor118o,tt)
-        stal3d18o=isotope_calcite(drip_interval_stal3, cave_temp, drip_pco2, cave_pco2, h, v,
+        stal3d18o,stal3_growth_rate=isotope_calcite(drip_interval_stal3, cave_temp, drip_pco2, cave_pco2, h, v,
         phi,drip218o,tt)
-        stal2d18o=isotope_calcite(drip_interval_stal2, cave_temp, drip_pco2, cave_pco2, h, v,
+        stal2d18o,stal2_growth_rate=isotope_calcite(drip_interval_stal2, cave_temp, drip_pco2, cave_pco2, h, v,
         phi,drip118o,tt)
 
     #returning the values to karstolution1.1 module to  be written to output
     return [tt,mm,f1,f3,f4,f5,f6,f7,soilstor,epxstor,kststor1,kststor2,soil18o,epx18o,kststor118o,
     kststor218o,dpdf[0],stal1d18o,stal2d18o,stal3d18o,stal4d18o,stal5d18o,drip_interval_ks2,
-    drip_interval_epi,drip_interval_stal3,drip_interval_stal2,drip_interval_ks1,cave_temp]
+    drip_interval_epi,drip_interval_stal3,drip_interval_stal2,drip_interval_ks1,cave_temp,
+    stal1_growth_rate,stal2_growth_rate,stal3_growth_rate,stal4_growth_rate,stal5_growth_rate]
 
 #function which ensures a variable is not negative and if it is, assigna a small positive value
 def checkzero(variable):

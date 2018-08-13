@@ -20,7 +20,9 @@ def karstolution(config,df_input,calculate_drip=True, calculate_isotope_calcite=
     output_columns = ['tt','mm','f1','f3','f4','f5','f6','f7','soilstor','epxstor',
     'kststor1','kststor2','soil18o','epx18o','kststor118o','kststor218o','dpdf[0]',
     'stal1d18o','stal2d18o','stal3d18o','stal4d18o','stal5d18o','drip_int_stal1',
-    'drip_int_stal4','drip_int_stal3','drip_int_stal2','drip_int_stal5','cave_temp']
+    'drip_int_stal4','drip_int_stal3','drip_int_stal2','drip_int_stal5','cave_temp',
+    'stal1_growth_rate','stal2_growth_rate','stal3_growth_rate','stal4_growth_rate',
+    'stal5_growth_rate']
 
     #unpacking inital values taken from the configuration file (in list 'data')
     # soili, epikarsti, ks1i, ks2i, diffusei
@@ -95,6 +97,7 @@ def karstolution(config,df_input,calculate_drip=True, calculate_isotope_calcite=
         # 15 kststor218o,dpdf[0],stal1d18o,stal2d18o,stal3d18o,
         # 20 stal4d18o,stal5d18o,drip_interval_ks2, drip_interval_epi,drip_interval_stal3,
         # 25 drip_interval_stal2,drip_interval_ks1,cave_temp
+        # 28 stal1_growth_rate,stal2_growth_rate,stal3_growth_rate,stal4_growth_rate,stal5_growth_rate
 
 
         #update model terms for next iteration
