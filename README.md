@@ -22,7 +22,7 @@ Scipy
 
 # Getting started
 
-[Anaconda Python](www.anaconda.com) is recommended, but not essential.  The steps for installing with Anaconda are:
+[Anaconda Python](https://www.anaconda.com) is recommended, but not essential.  The steps for installing with Anaconda are:
 
 1. Download and install Anaconda installer from https://www.anaconda.com/download/.  The Python 3.6 version is preferred.
 
