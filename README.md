@@ -1,29 +1,60 @@
 # Karstolution
-The First Speleothem δ18O Model Integrating Karst Hydrological and In-Cave Fractionation Processes.  
-Coupling of existing KarstFor (Bradley et al., 2010) and ISOLTUION (Deininger et al., 2012) models.   
-A manuscript presenting Karstolution and with a case-study of Golgotha Cave is under review in GCA.  
-A Windows executable GUI has also been created to allow easy use of the model. This is downloadable from www.connectedwaters.edu.au/karstolution. The wxpython code is also available in this GitHub despoitory. See below.  
-This python code is to allow furhter customisation of the Karstolution model, improvements and allow more advanced model runs such as customisable plotting and batch runs.  
+
+
+[![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/agriff86/karstolution/master?filepath=notebooks%2Fexample2.ipynb)
+
+
+Karstolution is a Speleothem δ18O Model Integrating Karst Hydrological and In-Cave Fractionation Processes.  
+It couples KarstFor, a lumped parameter karst hydrology model, (Bradley et al., 2010) with ISOLTUION, a model of the in-cave calcite system (Deininger et al., 2012).
+
+Karstolution is implemented as a python module.  Examples are provided for using it from a [python script](./example) or from [Jupyter notebooks](./notebooks).
 
 # Conceptual Figure
 ![Alt text](https://cloud.githubusercontent.com/assets/19680492/15954071/f8490ce4-2f15-11e6-822b-d1087f8248a9.png "Karstolution Conceptual Figure")
 
 # Dependancies
+Python 2.7.x or Python 3.6.x
 Numpy  
 Scipy  
 (optional) matplotlib  
 (optional) pandas  
 (optional) pyaml
 
-# Installation
+# Getting started
 
-TODO
+[Anaconda Python](www.anaconda.com) is recommended, but not essential.  The steps for installing with Anaconda are:
+
+1. Download and install Anaconda installer from https://www.anaconda.com/download/.  The Python 3.6 version is preferred.
+
+2. Check that dependencies are installed (many will already be installed) with:
+   ````sh
+   conda install matplotlib numba numpy pandas pyyaml scipy
+   ````
+
+3. Download a copy of Karstolution.  With Git:
+   ````sh
+   git clone https://github.com/agriff86/karstolution.git
+   ````
+   or simply [download the zip from github](https://github.com/agriff86/karstolution/archive/master.zip) and unzip
+
+4. Run an example script
+   ````sh
+   cd karstolution/example
+   python example.py
+   ````
+   The example script writes results to `output.csv`.
+
+5. Run the example notebooks in `karstolution/notebook`.  If you haven't run Jupyter notebooks before, [these instructions](http://jupyter-notebook-beginner-guide.readthedocs.io/en/latest/) might be a useful start.
+
+# Online demo
+
+A demonstration run is [available via Binder](https://mybinder.org/v2/gh/agriff86/karstolution/master?filepath=notebooks%2Fexample2.ipynb).  Binder is a free service, so this runs much slower than installing locally and may be unavailable in times of high demand.
 
 # Configuration File
 
 The configuration is passed to the main model routine as a `dict`, i.e. a Python dictionary.
 A convenient way of soring the configuration is as a [yaml](http://yaml.org/) formatted file.
-See `example/example.py` for full details.
+See (./example/example.py) for a working example.
 
 ```yaml
 f1 : 0.2
@@ -84,6 +115,21 @@ tt: an id column with numbers from 1 to total number of model steps
 mm: representing the month of that model step (important for seasonality), values 1-12  
 evpt: evapotranspiration (mm)  
 prp: rainfall amount (mm)  
-tempp: surface temperature (degree celcius)  
+tempp: surface temperature (degree celsius)  
 d18O: the δ18O of rainfall amount  
 
+# Calculating pCO2 from Calcite
+
+The input for Karstolution requires pCO2, the CO2-equivalent volume mixing ratio (ppm), of dripwater.  More commonly, though, Ca+ concentrations are available from field measurements.  To convert from Ca+ to pCO2, use `calc_pco2`.  For example, to calculate pCO2 for a temperature of 21 degC and Ca+ concentration of $10^{-3}$ mol/l do the following:
+
+```python
+from Karstolution.calcpco2 import calc_pco2
+pco2 = calc_pco2(ca=1e-3, TC=21.)
+print(pco2)
+```
+
+For a more sophisticated approach, consider [PHREEQC](https://wwwbrr.cr.usgs.gov/projects/GWC_coupled/phreeqc/).
+
+# Reference
+
+(TODO)
