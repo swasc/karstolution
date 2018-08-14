@@ -120,7 +120,7 @@ d18O: the δ18O of rainfall amount
 
 # Calculating pCO2 from Calcite
 
-The input for Karstolution requires pCO2, the CO2-equivalent volume mixing ratio (ppm), of dripwater.  More commonly, though, Ca+ concentrations are available from field measurements.  To convert from Ca+ to pCO2, use `calc_pco2`.  For example, to calculate pCO2 for a temperature of 21 degC and Ca+ concentration of $10^{-3}$ mol/l do the following:
+The input for Karstolution requires pCO2, the CO2-equivalent volume mixing ratio (ppm), of dripwater.  More commonly, though, Ca+ concentrations are available from field measurements.  To convert from Ca+ to pCO2, use `calc_pco2`.  For example, to calculate pCO2 for a temperature of 21 degC and Ca+ concentration of 10<sup>-3</sup> mol/l do the following:
 
 ```python
 from Karstolution.calcpco2 import calc_pco2
@@ -128,7 +128,7 @@ pco2 = calc_pco2(ca=1e-3, TC=21.)
 print(pco2)
 ```
 
-For a more sophisticated approach, consider [PHREEQC](https://wwwbrr.cr.usgs.gov/projects/GWC_coupled/phreeqc/).
+For a more sophisticated approach to calculating pCO2, consider using [PHREEQC](https://wwwbrr.cr.usgs.gov/projects/GWC_coupled/phreeqc/).
 
 # Reference
 
