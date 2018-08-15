@@ -1,7 +1,7 @@
 # Karstolution
 
 
-[![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/agriff86/karstolution/master?filepath=notebooks%2Fexample2.ipynb)
+[![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/agriff86/karstolution/master?filepath=notebooks%2FKarstolution-example-2.ipynb)
 
 
 Karstolution is a Speleothem δ18O Model Integrating Karst Hydrological and In-Cave Fractionation Processes.  
