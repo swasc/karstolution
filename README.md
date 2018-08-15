@@ -10,7 +10,7 @@ It couples KarstFor, a lumped parameter karst hydrology model, (Bradley et al., 
 Karstolution is implemented as a python module.  Examples are provided for using it from a [python script](./example) or from [Jupyter notebooks](./notebooks).
 
 # Conceptual Figure
-![Alt text](https://cloud.githubusercontent.com/assets/19680492/15954071/f8490ce4-2f15-11e6-822b-d1087f8248a9.png "Karstolution Conceptual Figure")
+![Karstolution Conceptual Figure](./concept.jpg "Karstolution Conceptual Figure")
 
 # Running Karstolution online in hosted notebooks
 
@@ -140,8 +140,8 @@ d18O: the δ18O of rainfall amount
 The input for Karstolution requires pCO2, the CO2-equivalent volume mixing ratio (ppm), of dripwater.  More commonly, though, Ca+ concentrations are available from field measurements.  To convert from Ca+ to pCO2, use `calc_pco2`.  For example, to calculate pCO2 for a temperature of 21 degC and Ca+ concentration of 10<sup>-3</sup> mol/l do the following:
 
 ```python
-from Karstolution.calcpco2 import calc_pco2
-pco2 = calc_pco2(ca=1e-3, TC=21.)
+import Karstolution
+pco2 = Karstolution.calc_pco2(ca=1e-3, TC=21.)
 print(pco2)
 ```
 
