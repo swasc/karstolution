@@ -12,7 +12,28 @@ Karstolution is implemented as a python module.  Examples are provided for using
 # Conceptual Figure
 ![Alt text](https://cloud.githubusercontent.com/assets/19680492/15954071/f8490ce4-2f15-11e6-822b-d1087f8248a9.png "Karstolution Conceptual Figure")
 
-# Dependancies
+# Running Karstolution online in hosted notebooks
+
+## Binder
+
+A demonstration run is [available via Binder](https://mybinder.org/v2/gh/agriff86/karstolution/master?filepath=notebooks%2FKarstolution-example-2.ipynb).  Binder is a free service, so this runs much slower than installing locally and may be unavailable in times of high demand, but you won't need to sign up.
+
+## Microsoft Azure Notebooks
+
+Karstolution has been tested with [Microsoft Azure Notebooks](https://notebooks.azure.com), a free service [currently in preview](https://notebooks.azure.com/help/preview). 
+
+It is free to use Azure Notebooks, but you will need a Microsoft account.  To run Karstolution:
+
+ 1. Import Karstolution from github into Azure Notebooks, using this link [![Azure Notebooks](https://notebooks.azure.com/launch.png)](https://notebooks.azure.com/import/gh/agriff86/karstolution)
+ 2. After import, navigate to the `notebooks` directory and run one of the examples.
+
+The Azure environment includes the full Anaconda distribution, so all dependencies should be met.
+
+
+# Local installation
+
+## Dependancies
+
 Python 2.7.x or Python 3.6.x
 Numpy  
 Scipy  
@@ -20,13 +41,13 @@ Scipy
 (optional) pandas  
 (optional) pyaml
 
-# Getting started
+## Installation steps
 
 [Anaconda Python](https://www.anaconda.com) is recommended, but not essential.  The steps for installing with Anaconda are:
 
 1. Download and install Anaconda installer from https://www.anaconda.com/download/.  The Python 3.6 version is preferred.
 
-2. Check that dependencies are installed (many will already be installed) with:
+2. Check that dependencies are installed (these are likely to be installed already) with:
    ````sh
    conda install matplotlib numba numpy pandas pyyaml scipy
    ````
@@ -45,10 +66,6 @@ Scipy
    The example script writes results to `output.csv`.
 
 5. Run the example notebooks in `karstolution/notebook`.  If you haven't run Jupyter notebooks before, [these instructions](http://jupyter-notebook-beginner-guide.readthedocs.io/en/latest/) might be a useful start.
-
-# Online demo
-
-A demonstration run is [available via Binder](https://mybinder.org/v2/gh/agriff86/karstolution/master?filepath=notebooks%2Fexample2.ipynb).  Binder is a free service, so this runs much slower than installing locally and may be unavailable in times of high demand.
 
 # Configuration File
 
@@ -132,4 +149,6 @@ For a more sophisticated approach to calculating pCO2, consider using [PHREEQC](
 
 # Reference
 
-(TODO)
+Bradley, Chris, et al. "Hydrological uncertainties in the modelling of cave drip-water δ18O and the implications for stalagmite palaeoclimate reconstructions." Quaternary Science Reviews 29.17-18 (2010): 2201-2214.
+
+Deininger, Michael, et al. "Isotope disequilibrium effects: The influence of evaporation and ventilation effects on the carbon and oxygen isotope composition of speleothems–A model approach." Geochimica et Cosmochimica Acta 96 (2012): 57-79.
