@@ -10,5 +10,5 @@ jupyter nbextension enable  --user --py fileupload
 
 # Notebooks w/ extensions that auto-run code must be "trusted"
 # to work the first time
-jupyter trust notebooks/example2.ipynb
+jupyter trust notebooks/Karstolution-example-2.ipynb
 
