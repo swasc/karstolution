@@ -1,7 +1,7 @@
 # Karstolution
 
 
-[![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/agriff86/karstolution/master?filepath=notebooks%2FKarstolution-example-2.ipynb)
+[![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/swasc/karstolution/master?filepath=notebooks%2FKarstolution-example-2.ipynb)
 
 
 Karstolution is a Speleothem δ18O Model Integrating Karst Hydrological and In-Cave Fractionation Processes.  
@@ -16,7 +16,7 @@ Karstolution is implemented as a python module.  Examples are provided for using
 
 ## Binder
 
-A demonstration run is [available via Binder](https://mybinder.org/v2/gh/agriff86/karstolution/master?filepath=notebooks%2FKarstolution-example-2.ipynb).  Binder is a free service, so this runs much slower than installing locally and may be unavailable in times of high demand, but you won't need to sign up.
+A demonstration run is [available via Binder](https://mybinder.org/v2/gh/swasc/karstolution/master?filepath=notebooks%2FKarstolution-example-2.ipynb).  Binder is a free service, so this runs much slower than installing locally and may be unavailable in times of high demand, but you won't need to sign up.
 
 ## Microsoft Azure Notebooks
 
@@ -24,7 +24,7 @@ Karstolution has been tested with [Microsoft Azure Notebooks](https://notebooks.
 
 It is free to use Azure Notebooks, but you will need a Microsoft account.  To run Karstolution:
 
- 1. Import Karstolution from github into Azure Notebooks, using this link [![Azure Notebooks](https://notebooks.azure.com/launch.png)](https://notebooks.azure.com/import/gh/agriff86/karstolution)
+ 1. Import Karstolution from github into Azure Notebooks, using this link [![Azure Notebooks](https://notebooks.azure.com/launch.png)](https://notebooks.azure.com/import/gh/swasc/karstolution)
  2. After import, navigate to the `notebooks` directory and run one of the examples.
 
 The Azure environment includes the full Anaconda distribution, so all dependencies should be met.
@@ -54,9 +54,9 @@ Scipy
 
 3. Download a copy of Karstolution.  With Git:
    ````sh
-   git clone https://github.com/agriff86/karstolution.git
+   git clone https://github.com/swasc/karstolution.git
    ````
-   or simply [download the zip from github](https://github.com/agriff86/karstolution/archive/master.zip) and unzip
+   or simply [download the zip from github](https://github.com/swasc/karstolution/archive/master.zip) and unzip
 
 4. Run an example script
    ````sh
